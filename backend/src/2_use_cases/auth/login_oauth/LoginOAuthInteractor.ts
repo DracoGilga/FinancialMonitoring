@@ -1,24 +1,33 @@
 // src/2_use_cases/auth/login_oauth/LoginOAuthInteractor.ts
 import { ILoginOAuthInputPort } from './ILoginOAuthInputPort';
-import { ILoginOAuthOutputPort } from './ILoginOAuthOutputPort';
+import {
+  ILoginOAuthOutputPort,
+  LoginOAuthViewModel,
+} from './ILoginOAuthOutputPort';
 import { IOAuthValidationGateway } from './IOAuthValidationGateway';
 import { IAuthQueryGateway } from '../shared_ports/IAuthQueryGateway';
 import { IAuthCommandGateway } from '../shared_ports/IAuthCommandGateway';
+import { ITokenGenerator } from '../shared_ports/ITokenGenerator';
 import { LoginOAuthRequest } from './LoginOAuthRequest';
 import { LoginOAuthResponse } from './LoginOAuthResponse';
 import { User } from '../../../1_entities/auth/User';
 import { OAuthAccount } from '../../../1_entities/auth/OAuthAccount';
 import { Session } from '../../../1_entities/auth/Session';
+import * as crypto from 'node:crypto';
 
 export class LoginOAuthInteractor implements ILoginOAuthInputPort {
   constructor(
     private readonly authQueryGateway: IAuthQueryGateway,
     private readonly authCommandGateway: IAuthCommandGateway,
     private readonly oauthValidationGateway: IOAuthValidationGateway,
+    private readonly tokenGenerator: ITokenGenerator,
+    private readonly refreshTokenDays: number,
     private readonly outputPort: ILoginOAuthOutputPort,
   ) {}
 
-  public async execute(request: LoginOAuthRequest): Promise<void> {
+  public async execute(
+    request: LoginOAuthRequest,
+  ): Promise<LoginOAuthViewModel> {
     try {
       let isNewUser = false;
 
@@ -32,7 +41,6 @@ export class LoginOAuthInteractor implements ILoginOAuthInputPort {
 
       if (!user) {
         isNewUser = true;
-
         user = new User(
           crypto.randomUUID(),
           profile.email,
@@ -55,22 +63,28 @@ export class LoginOAuthInteractor implements ILoginOAuthInputPort {
         }
       }
 
-      const session = new Session(
-        crypto.randomUUID(),
+      const accessToken = this.tokenGenerator.generateAccessToken(
         user.id,
-        new Date(Date.now() + 86400000),
+        user.email,
       );
+
+      const expirationDate = new Date();
+      expirationDate.setDate(expirationDate.getDate() + this.refreshTokenDays);
+
+      const session = new Session(crypto.randomUUID(), user.id, expirationDate);
 
       await this.authCommandGateway.saveSession(session);
 
       const response = new LoginOAuthResponse(
+        accessToken,
         session.id,
         user.firstName,
         isNewUser,
       );
-      this.outputPort.presentSuccess(response);
+
+      return this.outputPort.presentSuccess(response);
     } catch (error) {
-      this.outputPort.presentError(error as Error);
+      return this.outputPort.presentError(error as Error);
     }
   }
 }

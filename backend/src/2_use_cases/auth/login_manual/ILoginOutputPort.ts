@@ -5,6 +5,7 @@ export interface LoginSuccessViewModel {
   status: 'success';
   data: {
     token: string;
+    refresh_token: string;
     user_name: string;
   };
 }

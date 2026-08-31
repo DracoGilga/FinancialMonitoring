@@ -7,12 +7,13 @@ import {
 import { LoginManualResponse } from '../../../2_use_cases/auth/login_manual/LoginManualResponse';
 
 export class LoginPresenter implements ILoginOutputPort {
-  public presentSuccess(response: LoginManualResponse): LoginSuccessViewModel {
+  presentSuccess(response: LoginManualResponse): LoginSuccessViewModel {
     return {
       status: 'success',
       data: {
-        token: response.sessionId,
-        user_name: response.userFirstName,
+        token: response.accessToken,
+        refresh_token: response.refreshToken, // <-- NUEVO
+        user_name: response.firstName,
       },
     };
   }

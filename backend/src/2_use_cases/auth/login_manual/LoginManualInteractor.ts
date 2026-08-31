@@ -4,16 +4,19 @@ import { ILoginOutputPort, LoginResultViewModel } from './ILoginOutputPort';
 import { IAuthQueryGateway } from '../shared_ports/IAuthQueryGateway';
 import { IAuthCommandGateway } from '../shared_ports/IAuthCommandGateway';
 import { IPasswordHasher } from '../shared_ports/IPasswordHasher';
+import { ITokenGenerator } from '../shared_ports/ITokenGenerator';
 import { LoginManualRequest } from './LoginManualRequest';
 import { LoginManualResponse } from './LoginManualResponse';
 import { Session } from '../../../1_entities/auth/Session';
-import * as crypto from 'crypto';
+import * as crypto from 'node:crypto';
 
 export class LoginManualInteractor implements ILoginInputPort {
   constructor(
     private readonly authQueryGateway: IAuthQueryGateway,
     private readonly authCommandGateway: IAuthCommandGateway,
     private readonly passwordHasher: IPasswordHasher,
+    private readonly tokenGenerator: ITokenGenerator,
+    private readonly refreshTokenDays: number,
     private readonly outputPort: ILoginOutputPort,
   ) {}
 
@@ -46,15 +49,23 @@ export class LoginManualInteractor implements ILoginInputPort {
         throw new Error('Credenciales inválidas');
       }
 
-      const session = new Session(
-        crypto.randomUUID(),
+      const accessToken = this.tokenGenerator.generateAccessToken(
         user.id,
-        new Date(Date.now() + 86400000),
+        user.email,
       );
+
+      const expirationDate = new Date();
+      expirationDate.setDate(expirationDate.getDate() + this.refreshTokenDays);
+
+      const session = new Session(crypto.randomUUID(), user.id, expirationDate);
 
       await this.authCommandGateway.saveSession(session);
 
-      const response = new LoginManualResponse(session.id, user.firstName);
+      const response = new LoginManualResponse(
+        accessToken,
+        session.id,
+        user.firstName,
+      );
       return this.outputPort.presentSuccess(response);
     } catch (error) {
       return this.outputPort.presentError(error as Error);

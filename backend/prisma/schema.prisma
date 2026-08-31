@@ -20,6 +20,8 @@ model User {
   updatedAt    DateTime @updatedAt @map("updated_at")
 
   oauthAccounts OAuthAccount[]
+  sessions      Session[]
+
   @@map("users") 
 }
 
@@ -29,8 +31,20 @@ model OAuthAccount {
   providerName String   @map("provider_name") 
   providerId   String   @map("provider_id")  
   createdAt    DateTime @default(now()) @map("created_at")
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  @@unique([providerName, providerId])
   
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([providerName, providerId])
   @@map("oauth_accounts")
+}
+
+model Session {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
 }

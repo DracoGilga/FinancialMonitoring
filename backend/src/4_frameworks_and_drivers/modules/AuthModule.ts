@@ -98,7 +98,14 @@ import { LoginOAuthInteractor } from '../../2_use_cases/auth/login_oauth/LoginOA
       provide: 'IOAuthValidationGateway',
       useFactory: () => {
         const googleClientId = process.env.GOOGLE_CLIENT_ID || '';
-        return new OAuthValidationGatewayImpl(googleClientId);
+        const facebookAppId = process.env.FACEBOOK_APP_ID || '';
+        const facebookAppSecret = process.env.FACEBOOK_APP_SECRET || '';
+
+        return new OAuthValidationGatewayImpl(
+          googleClientId,
+          facebookAppId,
+          facebookAppSecret,
+        );
       },
     },
     {

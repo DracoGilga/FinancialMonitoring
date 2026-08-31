@@ -50,6 +50,12 @@ export class AuthCommandGatewayImpl implements IAuthCommandGateway {
   }
 
   public async saveSession(session: Session): Promise<void> {
-    console.log('Guardando sesión temporalmente en memoria:', session);
+    await this.prisma.session.create({
+      data: {
+        id: session.id,
+        userId: session.userId,
+        expiresAt: session.expiresAt,
+      },
+    });
   }
 }

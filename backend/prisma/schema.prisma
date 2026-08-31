@@ -1,0 +1,36 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String?  @map("password_hash")
+  firstName    String   @map("first_name")
+  lastName     String?  @map("last_name")
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  oauthAccounts OAuthAccount[]
+  @@map("users") 
+}
+
+model OAuthAccount {
+  id           String   @id @default(uuid())
+  userId       String   @map("user_id")
+  providerName String   @map("provider_name") 
+  providerId   String   @map("provider_id")  
+  createdAt    DateTime @default(now()) @map("created_at")
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@unique([providerName, providerId])
+  
+  @@map("oauth_accounts")
+}

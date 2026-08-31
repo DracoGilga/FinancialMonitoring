@@ -1,6 +1,51 @@
 version: "3.8"
 
 services:
+  db:
+    container_name: app_postgres
+    image: postgres:15-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    container_name: app_redis
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    command: redis-server --requirepass ${REDIS_PASSWORD} --databases ${REDIS_DATABASES}
+    volumes:
+      - redisdata:/data
+
+  backend:
+    container_name: app_backend
+    image: node:20-alpine
+    working_dir: /app
+    ports:
+      - "3001:3000"
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    command: sh -c "npm install && npx prisma generate && npx prisma db push && npm run start:dev"
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=${DATABASE_URL}
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
   frontend:
     container_name: app_frontend
     image: node:20-alpine
@@ -16,15 +61,6 @@ services:
     depends_on:
       - backend
 
-  backend:
-    container_name: app_backend
-    image: node:20-alpine
-    working_dir: /app
-    ports:
-      - "3001:3000"
-    volumes:
-      - ./backend:/app
-      - /app/node_modules
-    command: sh -c "npm install && npm run start:dev"
-    environment:
-      - NODE_ENV=development
+volumes:
+  pgdata:
+  redisdata:

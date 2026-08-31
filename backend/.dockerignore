@@ -1,0 +1,15 @@
+node_modules
+dist
+npm-debug.log
+*.tsbuildinfo
+.env
+.prettierrc
+eslint.config.mjs
+nest-cli.json
+.agents
+.claude
+.cursor
+.devin
+.vscode
+test
+README.md

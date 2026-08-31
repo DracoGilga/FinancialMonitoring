@@ -3,14 +3,17 @@ import { ILoginInputPort } from './ILoginInputPort';
 import { ILoginOutputPort, LoginResultViewModel } from './ILoginOutputPort';
 import { IAuthQueryGateway } from '../shared_ports/IAuthQueryGateway';
 import { IAuthCommandGateway } from '../shared_ports/IAuthCommandGateway';
+import { IPasswordHasher } from '../shared_ports/IPasswordHasher';
 import { LoginManualRequest } from './LoginManualRequest';
 import { LoginManualResponse } from './LoginManualResponse';
 import { Session } from '../../../1_entities/auth/Session';
+import * as crypto from 'crypto';
 
 export class LoginManualInteractor implements ILoginInputPort {
   constructor(
     private readonly authQueryGateway: IAuthQueryGateway,
     private readonly authCommandGateway: IAuthCommandGateway,
+    private readonly passwordHasher: IPasswordHasher,
     private readonly outputPort: ILoginOutputPort,
   ) {}
 
@@ -26,6 +29,21 @@ export class LoginManualInteractor implements ILoginInputPort {
 
       if (!user.canLogin()) {
         throw new Error('El usuario está inactivo');
+      }
+
+      const storedHash = user.getPasswordHash();
+
+      if (!storedHash) {
+        throw new Error('Credenciales inválidas');
+      }
+
+      const isPasswordValid = await this.passwordHasher.compare(
+        request.plainPassword,
+        storedHash,
+      );
+
+      if (!isPasswordValid) {
+        throw new Error('Credenciales inválidas');
       }
 
       const session = new Session(

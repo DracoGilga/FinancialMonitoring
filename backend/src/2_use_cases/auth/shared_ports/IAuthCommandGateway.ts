@@ -6,4 +6,5 @@ import { Session } from '../../../1_entities/auth/Session';
 export interface IAuthCommandGateway {
   saveSession(session: Session): Promise<void>;
   saveNewOAuthUser(user: User, oauthAccount: OAuthAccount): Promise<void>;
+  saveNewUser(user: User): Promise<void>;
 }

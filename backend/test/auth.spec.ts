@@ -40,23 +40,29 @@ const createAuthCommandGateway = (): jest.Mocked<IAuthCommandGateway> => ({
 describe('manual registration', () => {
   it('registers a user with a hashed password', async () => {
     const queryGateway: jest.Mocked<IAuthQueryGateway> = {
-      findUserByEmail: mock<IAuthQueryGateway['findUserByEmail']>().mockResolvedValue(null),
-      findUserById: mock<IAuthQueryGateway['findUserById']>().mockResolvedValue(null),
+      findUserByEmail:
+        mock<IAuthQueryGateway['findUserByEmail']>().mockResolvedValue(null),
+      findUserById:
+        mock<IAuthQueryGateway['findUserById']>().mockResolvedValue(null),
     };
     const commandGateway = createAuthCommandGateway();
     const passwordHasher: jest.Mocked<IPasswordHasher> = {
-      hash: mock<IPasswordHasher['hash']>().mockResolvedValue('hashed-password'),
+      hash: mock<IPasswordHasher['hash']>().mockResolvedValue(
+        'hashed-password',
+      ),
       compare: mock<IPasswordHasher['compare']>(),
     };
     const outputPort: jest.Mocked<IRegisterManualOutputPort> = {
-      presentSuccess: mock<IRegisterManualOutputPort['presentSuccess']>((response) => ({
-        status: 'success' as const,
-        data: {
-          id: response.id,
-          email: response.email,
-          user_name: response.firstName,
-        },
-      })),
+      presentSuccess: mock<IRegisterManualOutputPort['presentSuccess']>(
+        (response) => ({
+          status: 'success' as const,
+          data: {
+            id: response.id,
+            email: response.email,
+            user_name: response.firstName,
+          },
+        }),
+      ),
       presentError: mock<IRegisterManualOutputPort['presentError']>(),
     };
     const interactor = new RegisterManualInteractor(
@@ -86,20 +92,28 @@ describe('manual registration', () => {
     ['invalid email', null, 'El formato del correo es inválido'],
   ])('rejects %s', async (_caseName, existingUser, message) => {
     const queryGateway: jest.Mocked<IAuthQueryGateway> = {
-      findUserByEmail: mock<IAuthQueryGateway['findUserByEmail']>().mockResolvedValue(existingUser),
-      findUserById: mock<IAuthQueryGateway['findUserById']>().mockResolvedValue(null),
+      findUserByEmail:
+        mock<IAuthQueryGateway['findUserByEmail']>().mockResolvedValue(
+          existingUser,
+        ),
+      findUserById:
+        mock<IAuthQueryGateway['findUserById']>().mockResolvedValue(null),
     };
     const commandGateway = createAuthCommandGateway();
     const passwordHasher: jest.Mocked<IPasswordHasher> = {
-      hash: mock<IPasswordHasher['hash']>().mockResolvedValue('hashed-password'),
+      hash: mock<IPasswordHasher['hash']>().mockResolvedValue(
+        'hashed-password',
+      ),
       compare: mock<IPasswordHasher['compare']>(),
     };
     const outputPort: jest.Mocked<IRegisterManualOutputPort> = {
       presentSuccess: mock<IRegisterManualOutputPort['presentSuccess']>(),
-      presentError: mock<IRegisterManualOutputPort['presentError']>((error) => ({
-        status: 'error' as const,
-        message: error.message,
-      })),
+      presentError: mock<IRegisterManualOutputPort['presentError']>(
+        (error) => ({
+          status: 'error' as const,
+          message: error.message,
+        }),
+      ),
     };
     const interactor = new RegisterManualInteractor(
       queryGateway,
@@ -122,16 +136,22 @@ describe('manual registration', () => {
 describe('manual login and authorization rules', () => {
   const createLogin = (user: User | null, passwordValid = true) => {
     const queryGateway: jest.Mocked<IAuthQueryGateway> = {
-      findUserByEmail: mock<IAuthQueryGateway['findUserByEmail']>().mockResolvedValue(user),
-      findUserById: mock<IAuthQueryGateway['findUserById']>().mockResolvedValue(user),
+      findUserByEmail:
+        mock<IAuthQueryGateway['findUserByEmail']>().mockResolvedValue(user),
+      findUserById:
+        mock<IAuthQueryGateway['findUserById']>().mockResolvedValue(user),
     };
     const commandGateway = createAuthCommandGateway();
     const passwordHasher: jest.Mocked<IPasswordHasher> = {
       hash: mock<IPasswordHasher['hash']>(),
-      compare: mock<IPasswordHasher['compare']>().mockResolvedValue(passwordValid),
+      compare:
+        mock<IPasswordHasher['compare']>().mockResolvedValue(passwordValid),
     };
     const tokenGenerator: jest.Mocked<ITokenGenerator> = {
-      generateAccessToken: mock<ITokenGenerator['generateAccessToken']>().mockReturnValue('access-token'),
+      generateAccessToken:
+        mock<ITokenGenerator['generateAccessToken']>().mockReturnValue(
+          'access-token',
+        ),
     };
     const outputPort: jest.Mocked<ILoginOutputPort> = {
       presentSuccess: mock<ILoginOutputPort['presentSuccess']>((response) => ({
@@ -224,29 +244,41 @@ describe('OAuth login', () => {
 
   const createOAuthLogin = (user: User | null) => {
     const queryGateway: jest.Mocked<IAuthQueryGateway> = {
-      findUserByEmail: mock<IAuthQueryGateway['findUserByEmail']>().mockResolvedValue(user),
-      findUserById: mock<IAuthQueryGateway['findUserById']>().mockResolvedValue(user),
+      findUserByEmail:
+        mock<IAuthQueryGateway['findUserByEmail']>().mockResolvedValue(user),
+      findUserById:
+        mock<IAuthQueryGateway['findUserById']>().mockResolvedValue(user),
     };
     const commandGateway = createAuthCommandGateway();
     const oauthGateway = {
-      verifyTokenAndGetProfile: mock<IOAuthValidationGateway['verifyTokenAndGetProfile']>().mockResolvedValue(profile),
+      verifyTokenAndGetProfile:
+        mock<
+          IOAuthValidationGateway['verifyTokenAndGetProfile']
+        >().mockResolvedValue(profile),
     };
     const tokenGenerator: jest.Mocked<ITokenGenerator> = {
-      generateAccessToken: mock<ITokenGenerator['generateAccessToken']>().mockReturnValue('oauth-token'),
+      generateAccessToken:
+        mock<ITokenGenerator['generateAccessToken']>().mockReturnValue(
+          'oauth-token',
+        ),
     };
     const outputPort: jest.Mocked<ILoginOAuthOutputPort> = {
-      presentSuccess: mock<ILoginOAuthOutputPort['presentSuccess']>((response) => ({
-        status: 'success' as const,
-        data: {
-          token: response.accessToken,
-          refreshToken: response.refreshToken,
-          user_name: response.userFirstName,
-          is_new_user: response.isNewUser,
+      presentSuccess: mock<ILoginOAuthOutputPort['presentSuccess']>(
+        (response) => ({
+          status: 'success' as const,
+          data: {
+            token: response.accessToken,
+            refreshToken: response.refreshToken,
+            user_name: response.userFirstName,
+            is_new_user: response.isNewUser,
+          },
+        }),
+      ),
+      presentError: mock<ILoginOAuthOutputPort['presentError']>(
+        (error): never => {
+          throw error;
         },
-      })),
-      presentError: mock<ILoginOAuthOutputPort['presentError']>((error): never => {
-        throw error;
-      }),
+      ),
     };
     return {
       interactor: new LoginOAuthInteractor(

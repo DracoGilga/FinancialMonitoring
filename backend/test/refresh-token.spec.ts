@@ -28,22 +28,23 @@ describe('RefreshTokenService', () => {
       delete: mock<ISessionStore['delete']>(),
     };
     const refreshTokenGenerator: jest.Mocked<IRefreshTokenGenerator> = {
-      generate: mock<IRefreshTokenGenerator['generate']>().mockReturnValue(
-        'new-refresh-token',
-      ),
+      generate:
+        mock<IRefreshTokenGenerator['generate']>().mockReturnValue(
+          'new-refresh-token',
+        ),
       hash: mock<IRefreshTokenGenerator['hash']>((token) => `hash:${token}`),
     };
     const tokenGenerator: jest.Mocked<ITokenGenerator> = {
-      generateAccessToken: mock<ITokenGenerator['generateAccessToken']>().mockReturnValue(
-        'new-access-token',
-      ),
+      generateAccessToken:
+        mock<ITokenGenerator['generateAccessToken']>().mockReturnValue(
+          'new-access-token',
+        ),
     };
     const authQueryGateway: jest.Mocked<IAuthQueryGateway> = {
       findUserByEmail: mock<IAuthQueryGateway['findUserByEmail']>(),
-      findUserById: mock<IAuthQueryGateway['findUserById']>()
-        .mockResolvedValue(
-          new User('user-1', 'user@example.com', 'Cesar', null, true, null),
-        ),
+      findUserById: mock<IAuthQueryGateway['findUserById']>().mockResolvedValue(
+        new User('user-1', 'user@example.com', 'Cesar', null, true, null),
+      ),
     };
 
     return {

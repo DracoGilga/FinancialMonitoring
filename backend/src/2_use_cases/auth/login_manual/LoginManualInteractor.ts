@@ -5,6 +5,8 @@ import { IAuthQueryGateway } from '../shared_ports/IAuthQueryGateway';
 import { IAuthCommandGateway } from '../shared_ports/IAuthCommandGateway';
 import { IPasswordHasher } from '../shared_ports/IPasswordHasher';
 import { ITokenGenerator } from '../shared_ports/ITokenGenerator';
+import { IRefreshTokenGenerator } from '../shared_ports/IRefreshTokenGenerator';
+import { ISessionStore } from '../shared_ports/ISessionStore';
 import { LoginManualRequest } from './LoginManualRequest';
 import { LoginManualResponse } from './LoginManualResponse';
 import { Session } from '../../../1_entities/auth/Session';
@@ -18,6 +20,8 @@ export class LoginManualInteractor implements ILoginInputPort {
     private readonly tokenGenerator: ITokenGenerator,
     private readonly refreshTokenDays: number,
     private readonly outputPort: ILoginOutputPort,
+    private readonly sessionStore?: ISessionStore,
+    private readonly refreshTokenGenerator?: IRefreshTokenGenerator,
   ) {}
 
   public async execute(
@@ -58,8 +62,27 @@ export class LoginManualInteractor implements ILoginInputPort {
       expirationDate.setDate(expirationDate.getDate() + this.refreshTokenDays);
 
       const session = new Session(crypto.randomUUID(), user.id, expirationDate);
+      const refreshToken = this.refreshTokenGenerator?.generate() || session.id;
 
       await this.authCommandGateway.saveSession(session);
+
+      if (this.sessionStore && this.refreshTokenGenerator) {
+        const refreshTokenHash = this.refreshTokenGenerator.hash(refreshToken);
+        const ttlSeconds = Math.max(
+          1,
+          Math.floor((expirationDate.getTime() - Date.now()) / 1000),
+        );
+        await this.sessionStore.save(
+          refreshTokenHash,
+          {
+            userId: user.id,
+            expiresAt: expirationDate,
+            ip: request.ip || 'unknown',
+            userAgent: request.userAgent || 'unknown',
+          },
+          ttlSeconds,
+        );
+      }
 
       const response = new LoginManualResponse(
         accessToken,

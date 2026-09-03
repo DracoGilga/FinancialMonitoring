@@ -1,3 +1,5 @@
+// test/auth-validation.spec.ts
+import { describe, expect, it } from '@jest/globals';
 import { validate } from 'class-validator';
 import { RegisterDto } from '../src/3_interface_adapters/controllers/auth/dto/RegisterDto';
 import { LoginDto } from '../src/3_interface_adapters/controllers/auth/dto/login.dto';

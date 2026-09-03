@@ -12,7 +12,7 @@ export class LoginPresenter implements ILoginOutputPort {
       status: 'success',
       data: {
         token: response.accessToken,
-        refresh_token: response.refreshToken, // <-- NUEVO
+        refreshToken: response.refreshToken,
         user_name: response.firstName,
       },
     };

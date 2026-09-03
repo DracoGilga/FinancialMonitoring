@@ -3,5 +3,7 @@ export class LoginManualRequest {
   constructor(
     public readonly email: string,
     public readonly plainPassword: string,
+    public readonly ip?: string,
+    public readonly userAgent?: string,
   ) {}
 }

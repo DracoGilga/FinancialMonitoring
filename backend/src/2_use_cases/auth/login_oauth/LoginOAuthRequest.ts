@@ -3,5 +3,7 @@ export class LoginOAuthRequest {
   constructor(
     public readonly providerName: 'google' | 'facebook',
     public readonly token: string,
+    public readonly ip?: string,
+    public readonly userAgent?: string,
   ) {}
 }

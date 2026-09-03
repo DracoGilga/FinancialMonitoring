@@ -8,6 +8,8 @@ import { IOAuthValidationGateway } from './IOAuthValidationGateway';
 import { IAuthQueryGateway } from '../shared_ports/IAuthQueryGateway';
 import { IAuthCommandGateway } from '../shared_ports/IAuthCommandGateway';
 import { ITokenGenerator } from '../shared_ports/ITokenGenerator';
+import { IRefreshTokenGenerator } from '../shared_ports/IRefreshTokenGenerator';
+import { ISessionStore } from '../shared_ports/ISessionStore';
 import { LoginOAuthRequest } from './LoginOAuthRequest';
 import { LoginOAuthResponse } from './LoginOAuthResponse';
 import { User } from '../../../1_entities/auth/User';
@@ -23,6 +25,8 @@ export class LoginOAuthInteractor implements ILoginOAuthInputPort {
     private readonly tokenGenerator: ITokenGenerator,
     private readonly refreshTokenDays: number,
     private readonly outputPort: ILoginOAuthOutputPort,
+    private readonly sessionStore?: ISessionStore,
+    private readonly refreshTokenGenerator?: IRefreshTokenGenerator,
   ) {}
 
   public async execute(
@@ -72,8 +76,26 @@ export class LoginOAuthInteractor implements ILoginOAuthInputPort {
       expirationDate.setDate(expirationDate.getDate() + this.refreshTokenDays);
 
       const session = new Session(crypto.randomUUID(), user.id, expirationDate);
+      const refreshToken = this.refreshTokenGenerator?.generate() || session.id;
 
       await this.authCommandGateway.saveSession(session);
+
+      if (this.sessionStore && this.refreshTokenGenerator) {
+        const ttlSeconds = Math.max(
+          1,
+          Math.floor((expirationDate.getTime() - Date.now()) / 1000),
+        );
+        await this.sessionStore.save(
+          this.refreshTokenGenerator.hash(refreshToken),
+          {
+            userId: user.id,
+            expiresAt: expirationDate,
+            ip: request.ip || 'unknown',
+            userAgent: request.userAgent || 'unknown',
+          },
+          ttlSeconds,
+        );
+      }
 
       const response = new LoginOAuthResponse(
         accessToken,

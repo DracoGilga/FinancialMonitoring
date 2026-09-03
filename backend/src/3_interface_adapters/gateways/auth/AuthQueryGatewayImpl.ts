@@ -17,6 +17,27 @@ export class AuthQueryGatewayImpl implements IAuthQueryGateway {
       return null;
     }
 
+    return this.toUser(prismaUser);
+  }
+
+  public async findUserById(id: string): Promise<User | null> {
+    const prismaUser = await this.prisma.user.findUnique({ where: { id } });
+
+    if (!prismaUser) {
+      return null;
+    }
+
+    return this.toUser(prismaUser);
+  }
+
+  private toUser(prismaUser: {
+    id: string;
+    email: string;
+    firstName: string;
+    lastName: string | null;
+    isActive: boolean;
+    passwordHash: string | null;
+  }): User {
     return new User(
       prismaUser.id,
       prismaUser.email,

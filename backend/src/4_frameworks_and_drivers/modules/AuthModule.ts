@@ -21,11 +21,44 @@ import type { ILoginOutputPort } from '../../2_use_cases/auth/login_manual/ILogi
 import type { IRegisterManualOutputPort } from '../../2_use_cases/auth/register_manual/IRegisterManualOutputPort';
 import type { IOAuthValidationGateway } from '../../2_use_cases/auth/login_oauth/IOAuthValidationGateway';
 import type { ILoginOAuthOutputPort } from '../../2_use_cases/auth/login_oauth/ILoginOAuthOutputPort';
+import { RedisSessionStore } from '../../3_interface_adapters/gateways/auth/RedisSessionStore';
+import { SecureRefreshTokenGenerator } from '../../3_interface_adapters/gateways/auth/SecureRefreshTokenGenerator';
+import { RefreshTokenService } from '../../2_use_cases/auth/refresh/RefreshTokenService';
+import type { ISessionStore } from '../../2_use_cases/auth/shared_ports/ISessionStore';
+import type { IRefreshTokenGenerator } from '../../2_use_cases/auth/shared_ports/IRefreshTokenGenerator';
 
 @Module({
   controllers: [AuthController],
   providers: [
     PrismaService,
+    RedisSessionStore,
+    { provide: 'ISessionStore', useExisting: RedisSessionStore },
+    {
+      provide: 'IRefreshTokenGenerator',
+      useClass: SecureRefreshTokenGenerator,
+    },
+    {
+      provide: RefreshTokenService,
+      useFactory: (
+        sessionStore: ISessionStore,
+        refreshTokenGenerator: IRefreshTokenGenerator,
+        tokenGenerator: ITokenGenerator,
+        queryGateway: IAuthQueryGateway,
+      ) =>
+        new RefreshTokenService(
+          sessionStore,
+          refreshTokenGenerator,
+          tokenGenerator,
+          queryGateway,
+          parseInt(process.env.REFRESH_TOKEN_EXPIRES_IN_DAYS || '7', 10),
+        ),
+      inject: [
+        'ISessionStore',
+        'IRefreshTokenGenerator',
+        'ITokenGenerator',
+        'IAuthQueryGateway',
+      ],
+    },
     {
       provide: 'IAuthQueryGateway',
       useClass: AuthQueryGatewayImpl,
@@ -64,6 +97,8 @@ import type { ILoginOAuthOutputPort } from '../../2_use_cases/auth/login_oauth/I
         hasher: IPasswordHasher,
         tokenGenerator: ITokenGenerator,
         outputPort: ILoginOutputPort,
+        sessionStore: ISessionStore,
+        refreshTokenGenerator: IRefreshTokenGenerator,
       ) => {
         const refreshTokenDays = parseInt(
           process.env.REFRESH_TOKEN_EXPIRES_IN_DAYS || '7',
@@ -77,6 +112,8 @@ import type { ILoginOAuthOutputPort } from '../../2_use_cases/auth/login_oauth/I
           tokenGenerator,
           refreshTokenDays,
           outputPort,
+          sessionStore,
+          refreshTokenGenerator,
         );
       },
       inject: [
@@ -85,6 +122,8 @@ import type { ILoginOAuthOutputPort } from '../../2_use_cases/auth/login_oauth/I
         'IPasswordHasher',
         'ITokenGenerator',
         'ILoginOutputPort',
+        'ISessionStore',
+        'IRefreshTokenGenerator',
       ],
     },
     {
@@ -139,6 +178,8 @@ import type { ILoginOAuthOutputPort } from '../../2_use_cases/auth/login_oauth/I
         oauthValidationGw: IOAuthValidationGateway,
         tokenGenerator: ITokenGenerator,
         outputPort: ILoginOAuthOutputPort,
+        sessionStore: ISessionStore,
+        refreshTokenGenerator: IRefreshTokenGenerator,
       ) => {
         const refreshTokenDays = parseInt(
           process.env.REFRESH_TOKEN_EXPIRES_IN_DAYS || '7',
@@ -152,6 +193,8 @@ import type { ILoginOAuthOutputPort } from '../../2_use_cases/auth/login_oauth/I
           tokenGenerator,
           refreshTokenDays,
           outputPort,
+          sessionStore,
+          refreshTokenGenerator,
         );
       },
       inject: [
@@ -160,6 +203,8 @@ import type { ILoginOAuthOutputPort } from '../../2_use_cases/auth/login_oauth/I
         'IOAuthValidationGateway',
         'ITokenGenerator',
         'ILoginOAuthOutputPort',
+        'ISessionStore',
+        'IRefreshTokenGenerator',
       ],
     },
   ],

@@ -11,7 +11,7 @@ export class LoginOAuthPresenter implements ILoginOAuthOutputPort {
       status: 'success',
       data: {
         token: response.accessToken,
-        refresh_token: response.refreshToken,
+        refreshToken: response.refreshToken,
         user_name: response.userFirstName,
         is_new_user: response.isNewUser,
       },

@@ -4,7 +4,7 @@ export interface LoginOAuthViewModel {
   status: 'success';
   data: {
     token: string;
-    refresh_token: string;
+    refreshToken: string;
     user_name: string;
     is_new_user: boolean;
   };

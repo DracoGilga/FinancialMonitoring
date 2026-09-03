@@ -13,6 +13,14 @@ import { JwtTokenGenerator } from '../../3_interface_adapters/gateways/auth/JwtT
 import { OAuthValidationGatewayImpl } from '../../3_interface_adapters/gateways/auth/OAuthValidationGatewayImpl';
 import { LoginOAuthPresenter } from '../../3_interface_adapters/presenters/auth/LoginOAuthPresenter';
 import { LoginOAuthInteractor } from '../../2_use_cases/auth/login_oauth/LoginOAuthInteractor';
+import type { IAuthQueryGateway } from '../../2_use_cases/auth/shared_ports/IAuthQueryGateway';
+import type { IAuthCommandGateway } from '../../2_use_cases/auth/shared_ports/IAuthCommandGateway';
+import type { IPasswordHasher } from '../../2_use_cases/auth/shared_ports/IPasswordHasher';
+import type { ITokenGenerator } from '../../2_use_cases/auth/shared_ports/ITokenGenerator';
+import type { ILoginOutputPort } from '../../2_use_cases/auth/login_manual/ILoginOutputPort';
+import type { IRegisterManualOutputPort } from '../../2_use_cases/auth/register_manual/IRegisterManualOutputPort';
+import type { IOAuthValidationGateway } from '../../2_use_cases/auth/login_oauth/IOAuthValidationGateway';
+import type { ILoginOAuthOutputPort } from '../../2_use_cases/auth/login_oauth/ILoginOAuthOutputPort';
 
 @Module({
   controllers: [AuthController],
@@ -50,7 +58,13 @@ import { LoginOAuthInteractor } from '../../2_use_cases/auth/login_oauth/LoginOA
     },
     {
       provide: 'ILoginInputPort',
-      useFactory: (queryGw, commandGw, hasher, tokenGenerator, outputPort) => {
+      useFactory: (
+        queryGw: IAuthQueryGateway,
+        commandGw: IAuthCommandGateway,
+        hasher: IPasswordHasher,
+        tokenGenerator: ITokenGenerator,
+        outputPort: ILoginOutputPort,
+      ) => {
         const refreshTokenDays = parseInt(
           process.env.REFRESH_TOKEN_EXPIRES_IN_DAYS || '7',
           10,
@@ -79,7 +93,12 @@ import { LoginOAuthInteractor } from '../../2_use_cases/auth/login_oauth/LoginOA
     },
     {
       provide: 'IRegisterManualInputPort',
-      useFactory: (queryGw, commandGw, hasher, outputPort) => {
+      useFactory: (
+        queryGw: IAuthQueryGateway,
+        commandGw: IAuthCommandGateway,
+        hasher: IPasswordHasher,
+        outputPort: IRegisterManualOutputPort,
+      ) => {
         return new RegisterManualInteractor(
           queryGw,
           commandGw,
@@ -115,11 +134,11 @@ import { LoginOAuthInteractor } from '../../2_use_cases/auth/login_oauth/LoginOA
     {
       provide: 'ILoginOAuthInputPort',
       useFactory: (
-        queryGw,
-        commandGw,
-        oauthValidationGw,
-        tokenGenerator,
-        outputPort,
+        queryGw: IAuthQueryGateway,
+        commandGw: IAuthCommandGateway,
+        oauthValidationGw: IOAuthValidationGateway,
+        tokenGenerator: ITokenGenerator,
+        outputPort: ILoginOAuthOutputPort,
       ) => {
         const refreshTokenDays = parseInt(
           process.env.REFRESH_TOKEN_EXPIRES_IN_DAYS || '7',

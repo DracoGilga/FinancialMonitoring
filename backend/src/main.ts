@@ -26,4 +26,8 @@ async function bootstrap() {
 
   await app.listen(3000);
 }
-bootstrap();
+
+void bootstrap().catch((error: unknown) => {
+  console.error('Application failed to start', error);
+  process.exitCode = 1;
+});

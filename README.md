@@ -58,6 +58,22 @@ To stop the running containers, execute:
 docker compose down
 ```
 
+### Continuous integration
+
+The backend workflow runs on every push to `develop`, `main`, or `master`, and on pull requests targeting any of those branches. It runs lint, type-check, automated tests, and build; a pull request should only be merged after these checks pass.
+
+In Docker Compose, the backend runs its automated tests before starting the API. If a test fails, the backend process exits and the frontend waits because it requires a healthy backend.
+
+For the `develop` to `master` flow, configure branch protection in GitHub for `develop`, `main`, and `master` with these rules:
+
+- Require a pull request before merging.
+- Require the `Lint, type-check, test and build` status check.
+- Require branches to be up to date before merging.
+- Require conversations to be resolved.
+- Do not allow direct pushes or force pushes to protected branches.
+
+Merge conflicts are reported by GitHub on the existing pull request. The author should update that branch with the target branch and resolve the conflict; opening a second pull request for the same change is unnecessary. If issue tracking is required, create an issue from the conflicted pull request and link it to that pull request.
+
 ## 👨‍💻 Manual Setup (Without Docker)
 
 If you prefer to run the repositories locally without Docker for development purposes, you will need [Node.js](https://nodejs.org/) installed.

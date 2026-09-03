@@ -52,7 +52,7 @@ export class OAuthValidationGatewayImpl implements IOAuthValidationGateway {
         firstName: payload.given_name || 'Usuario',
         lastName: payload.family_name || null,
       };
-    } catch (error) {
+    } catch {
       throw new Error('Error validating Google token');
     }
   }
@@ -63,7 +63,9 @@ export class OAuthValidationGatewayImpl implements IOAuthValidationGateway {
       const debugTokenUrl = `https://graph.facebook.com/debug_token?input_token=${token}&access_token=${appAccessToken}`;
 
       const debugResponse = await fetch(debugTokenUrl);
-      const debugData = await debugResponse.json();
+      const debugData = (await debugResponse.json()) as {
+        data?: { error?: unknown; app_id?: string };
+      };
 
       if (!debugResponse.ok || debugData.data?.error) {
         throw new Error('The Facebook token is invalid or expired');
@@ -77,7 +79,12 @@ export class OAuthValidationGatewayImpl implements IOAuthValidationGateway {
 
       const url = `https://graph.facebook.com/me?fields=id,email,first_name,last_name&access_token=${token}`;
       const response = await fetch(url);
-      const data = await response.json();
+      const data = (await response.json()) as {
+        id?: string;
+        email?: string;
+        first_name?: string;
+        last_name?: string;
+      };
 
       if (!data.email || !data.id) {
         throw new Error(

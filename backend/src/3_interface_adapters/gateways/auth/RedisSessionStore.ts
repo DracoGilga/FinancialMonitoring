@@ -1,3 +1,4 @@
+// src/3_interface_adapters/gateways/auth/RedisSessionStore.ts
 import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { createClient, type RedisClientType } from 'redis';
 import type {
@@ -9,13 +10,14 @@ import type {
 export class RedisSessionStore
   implements ISessionStore, OnModuleInit, OnModuleDestroy
 {
-  private readonly client: RedisClientType = createClient({
-    socket: {
-      host: process.env.REDIS_HOST || 'redis',
-      port: Number(process.env.REDIS_PORT || 6379),
-    },
-    password: process.env.REDIS_PASSWORD,
-  });
+  private readonly client: RedisClientType;
+
+  constructor(host: string, port: number, password?: string) {
+    this.client = createClient({
+      socket: { host, port },
+      password,
+    });
+  }
 
   async onModuleInit(): Promise<void> {
     await this.client.connect();

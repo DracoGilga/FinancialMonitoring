@@ -17,6 +17,16 @@ jobs:
   quality:
     name: Lint, type-check, test and build
     runs-on: ubuntu-latest
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
     defaults:
       run:
         working-directory: backend
@@ -46,6 +56,13 @@ jobs:
 
       - name: Automated tests
         run: npm test -- --runInBand --coverage
+
+      - name: Redis integration tests
+        env:
+          REDIS_INTEGRATION: true
+          REDIS_HOST: localhost
+          REDIS_PORT: 6379
+        run: npm test -- --runInBand test/redis-session-store.integration.spec.ts
 
       - name: Build
         run: npm run build

@@ -99,7 +99,7 @@ export class LoginOAuthInteractor implements ILoginOAuthInputPort {
 
       const response = new LoginOAuthResponse(
         accessToken,
-        session.id,
+        refreshToken,
         user.firstName,
         isNewUser,
       );

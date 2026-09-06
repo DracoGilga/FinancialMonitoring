@@ -86,7 +86,7 @@ export class LoginManualInteractor implements ILoginInputPort {
 
       const response = new LoginManualResponse(
         accessToken,
-        session.id,
+        refreshToken,
         user.firstName,
       );
       return this.outputPort.presentSuccess(response);

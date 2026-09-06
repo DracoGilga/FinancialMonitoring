@@ -34,7 +34,15 @@ import type { IUpdateUserOutputPort } from '../../2_use_cases/auth/update_user/I
   controllers: [AuthController],
   providers: [
     PrismaService,
-    RedisSessionStore,
+    {
+      provide: RedisSessionStore,
+      useFactory: () =>
+        new RedisSessionStore(
+          process.env.REDIS_HOST || 'redis',
+          parseInt(process.env.REDIS_PORT || '6379', 10),
+          process.env.REDIS_PASSWORD,
+        ),
+    },
     { provide: 'ISessionStore', useExisting: RedisSessionStore },
     {
       provide: 'IRefreshTokenGenerator',

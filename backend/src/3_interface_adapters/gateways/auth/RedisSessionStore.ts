@@ -14,7 +14,6 @@ export class RedisSessionStore
       host: process.env.REDIS_HOST || 'redis',
       port: Number(process.env.REDIS_PORT || 6379),
     },
-    username: process.env.REDIS_USERNAME || 'default',
     password: process.env.REDIS_PASSWORD,
   });
 

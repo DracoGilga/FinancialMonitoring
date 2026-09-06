@@ -2,15 +2,22 @@
 import {
   Controller,
   Post,
+  Patch,
   Body,
   HttpException,
   HttpStatus,
   Inject,
   Req,
   Res,
+  UseGuards,
 } from '@nestjs/common';
 import type { Request, Response } from 'express';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+} from '@nestjs/swagger';
 import type { ILoginInputPort } from '../../../2_use_cases/auth/login_manual/ILoginInputPort';
 import { LoginManualRequest } from '../../../2_use_cases/auth/login_manual/LoginManualRequest';
 import { LoginDto } from './dto/login.dto';
@@ -21,6 +28,10 @@ import type { ILoginOAuthInputPort } from '../../../2_use_cases/auth/login_oauth
 import { LoginOAuthRequest } from '../../../2_use_cases/auth/login_oauth/LoginOAuthRequest';
 import { LoginOAuthDto } from './dto/LoginOAuthDto';
 import { RefreshTokenService } from '../../../2_use_cases/auth/refresh/RefreshTokenService';
+import type { IUpdateUserInputPort } from '../../../2_use_cases/auth/update_user/IUpdateUserInputPort';
+import { UpdateUserRequest } from '../../../2_use_cases/auth/update_user/UpdateUserRequest';
+import { UpdateUserDto } from './dto/UpdateUserDto';
+import { AuthenticatedRequest, JwtAuthGuard } from './guards/JwtAuthGuard';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -36,6 +47,9 @@ export class AuthController {
     private readonly loginOAuthUseCase: ILoginOAuthInputPort,
 
     private readonly refreshTokenService: RefreshTokenService,
+
+    @Inject('IUpdateUserInputPort')
+    private readonly updateUserUseCase: IUpdateUserInputPort,
   ) {}
 
   @Post('login')
@@ -151,6 +165,32 @@ export class AuthController {
         HttpStatus.UNAUTHORIZED,
       );
     }
+  }
+
+  @Patch('me')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Update the authenticated user profile' })
+  @ApiResponse({ status: 200, description: 'User updated successfully' })
+  @ApiResponse({ status: 400, description: 'Invalid or duplicate information' })
+  @ApiResponse({ status: 401, description: 'Missing or invalid access token' })
+  async updateMe(
+    @Body() body: UpdateUserDto,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    const updateRequest: UpdateUserRequest = {
+      userId: request.user.userId,
+      email: body.email,
+      firstName: body.firstName,
+      lastName: body.lastName,
+    };
+    const result = await this.updateUserUseCase.execute(updateRequest);
+
+    if (result.status === 'error') {
+      throw new HttpException(result.message, HttpStatus.BAD_REQUEST);
+    }
+
+    return result;
   }
 
   private setRefreshCookie(response: Response, refreshToken: string): void {

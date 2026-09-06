@@ -35,6 +35,7 @@ const createAuthCommandGateway = (): jest.Mocked<IAuthCommandGateway> => ({
   saveSession: mock<IAuthCommandGateway['saveSession']>(),
   saveNewOAuthUser: mock<IAuthCommandGateway['saveNewOAuthUser']>(),
   saveNewUser: mock<IAuthCommandGateway['saveNewUser']>(),
+  updateUser: mock<IAuthCommandGateway['updateUser']>(),
 });
 
 describe('manual registration', () => {

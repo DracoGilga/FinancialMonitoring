@@ -7,4 +7,8 @@ export interface IAuthCommandGateway {
   saveSession(session: Session): Promise<void>;
   saveNewOAuthUser(user: User, oauthAccount: OAuthAccount): Promise<void>;
   saveNewUser(user: User): Promise<void>;
+  updateUser(
+    userId: string,
+    data: { email?: string; firstName?: string; lastName?: string | null },
+  ): Promise<void>;
 }

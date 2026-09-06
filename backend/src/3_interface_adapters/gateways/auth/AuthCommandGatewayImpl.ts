@@ -49,6 +49,16 @@ export class AuthCommandGatewayImpl implements IAuthCommandGateway {
     });
   }
 
+  public async updateUser(
+    userId: string,
+    data: { email?: string; firstName?: string; lastName?: string | null },
+  ): Promise<void> {
+    await this.prisma.user.update({
+      where: { id: userId },
+      data,
+    });
+  }
+
   public async saveSession(session: Session): Promise<void> {
     await this.prisma.session.create({
       data: {

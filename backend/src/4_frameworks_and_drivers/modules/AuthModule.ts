@@ -26,6 +26,9 @@ import { SecureRefreshTokenGenerator } from '../../3_interface_adapters/gateways
 import { RefreshTokenService } from '../../2_use_cases/auth/refresh/RefreshTokenService';
 import type { ISessionStore } from '../../2_use_cases/auth/shared_ports/ISessionStore';
 import type { IRefreshTokenGenerator } from '../../2_use_cases/auth/shared_ports/IRefreshTokenGenerator';
+import { UpdateUserInteractor } from '../../2_use_cases/auth/update_user/UpdateUserInteractor';
+import { UpdateUserPresenter } from '../../3_interface_adapters/presenters/auth/UpdateUserPresenter';
+import type { IUpdateUserOutputPort } from '../../2_use_cases/auth/update_user/IUpdateUserOutputPort';
 
 @Module({
   controllers: [AuthController],
@@ -66,6 +69,23 @@ import type { IRefreshTokenGenerator } from '../../2_use_cases/auth/shared_ports
     {
       provide: 'IAuthCommandGateway',
       useClass: AuthCommandGatewayImpl,
+    },
+    {
+      provide: 'IUpdateUserOutputPort',
+      useClass: UpdateUserPresenter,
+    },
+    {
+      provide: 'IUpdateUserInputPort',
+      useFactory: (
+        queryGateway: IAuthQueryGateway,
+        commandGateway: IAuthCommandGateway,
+        outputPort: IUpdateUserOutputPort,
+      ) => new UpdateUserInteractor(queryGateway, commandGateway, outputPort),
+      inject: [
+        'IAuthQueryGateway',
+        'IAuthCommandGateway',
+        'IUpdateUserOutputPort',
+      ],
     },
     {
       provide: 'ILoginOutputPort',

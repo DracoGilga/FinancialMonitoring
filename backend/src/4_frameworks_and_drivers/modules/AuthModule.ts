@@ -105,14 +105,50 @@ import {
             throw new Error(`Unsupported storage provider: ${provider}`);
           }
 
+          const providerSettings = {
+            aws: {
+              bucket: process.env.AWS_STORAGE_BUCKET,
+              region: process.env.AWS_STORAGE_REGION,
+              accessKeyId: process.env.AWS_STORAGE_ACCESS_KEY_ID,
+              secretAccessKey: process.env.AWS_STORAGE_SECRET_ACCESS_KEY,
+              endpoint: process.env.AWS_STORAGE_ENDPOINT,
+            },
+            gcp: {
+              bucket: process.env.GCP_STORAGE_BUCKET,
+              region: undefined,
+              accessKeyId: undefined,
+              secretAccessKey: undefined,
+              endpoint: process.env.GCP_STORAGE_ENDPOINT,
+            },
+            azure: {
+              bucket: undefined,
+              region: undefined,
+              accessKeyId: undefined,
+              secretAccessKey: undefined,
+              endpoint: process.env.AZURE_STORAGE_ENDPOINT,
+            },
+            oracle: {
+              bucket: process.env.ORACLE_STORAGE_BUCKET,
+              region: process.env.ORACLE_STORAGE_REGION,
+              accessKeyId: process.env.ORACLE_STORAGE_ACCESS_KEY_ID,
+              secretAccessKey: process.env.ORACLE_STORAGE_SECRET_ACCESS_KEY,
+              endpoint: process.env.ORACLE_STORAGE_ENDPOINT,
+            },
+          } as const;
+          const settings = providerSettings[provider];
+
           const config: CloudStorageConfig = {
             provider,
-            bucket: process.env.STORAGE_BUCKET || '',
-            region: process.env.STORAGE_REGION,
-            accessKeyId: process.env.STORAGE_ACCESS_KEY_ID,
-            secretAccessKey: process.env.STORAGE_SECRET_ACCESS_KEY,
-            endpoint: process.env.STORAGE_ENDPOINT,
-            projectId: process.env.GCP_PROJECT_ID,
+            bucket: process.env.STORAGE_BUCKET || settings.bucket || '',
+            region: process.env.STORAGE_REGION || settings.region,
+            accessKeyId:
+              process.env.STORAGE_ACCESS_KEY_ID || settings.accessKeyId,
+            secretAccessKey:
+              process.env.STORAGE_SECRET_ACCESS_KEY || settings.secretAccessKey,
+            endpoint: process.env.STORAGE_ENDPOINT || settings.endpoint,
+            projectId:
+              process.env.GCP_PROJECT_ID ||
+              (settings.endpoint ? 'local-project' : undefined),
             keyFilename: process.env.GOOGLE_APPLICATION_CREDENTIALS,
             accountName: process.env.AZURE_STORAGE_ACCOUNT,
             accountKey: process.env.AZURE_STORAGE_KEY,

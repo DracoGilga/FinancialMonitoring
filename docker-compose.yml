@@ -1,6 +1,6 @@
 services:
   db:
-    container_name: app_postgres
+    container_name: postgres
     image: postgres:15-alpine
     ports:
       - "5432:5432"
@@ -17,7 +17,7 @@ services:
       retries: 5
 
   redis:
-    container_name: app_redis
+    container_name: redis
     image: redis:7-alpine
     ports:
       - "6379:6379"
@@ -32,8 +32,100 @@ services:
     volumes:
       - redisdata:/data
 
+  localstack:
+    container_name: emulated-aws
+    image: localstack/localstack:3.8.0
+    ports:
+      - "4566:4566"
+    environment:
+      SERVICES: s3
+      AWS_DEFAULT_REGION: ${AWS_STORAGE_REGION:-us-east-1}
+      AWS_ACCESS_KEY_ID: ${AWS_STORAGE_ACCESS_KEY_ID:-test-access-key}
+      AWS_SECRET_ACCESS_KEY: ${AWS_STORAGE_SECRET_ACCESS_KEY:-test-secret-key}
+    volumes:
+      - localstackdata:/var/lib/localstack
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4566/_localstack/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  fake-gcs:
+    container_name: emulated-google-cloud
+    image: fsouza/fake-gcs-server:latest
+    command: -scheme http -port 4443 -public-host fake-gcs:4443
+    ports:
+      - "4443:4443"
+    volumes:
+      - fakegcsdata:/data
+    healthcheck:
+      test:
+        ["CMD", "wget", "--spider", "-q", "http://localhost:4443/storage/v1/b"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  azurite:
+    container_name: emulated-azure
+    image: mcr.microsoft.com/azure-storage/azurite:latest
+    command: azurite-blob --blobHost 0.0.0.0 --loose
+    environment:
+      AZURITE_ACCOUNTS: devstoreaccount1:Eby8vdM02xNOcqFlqUwJrMCcFZ2s4dM4j8hV4S1cYvE=
+    ports:
+      - "10000:10000"
+    volumes:
+      - azuritedata:/data
+    healthcheck:
+      test: ["CMD", "nc", "-z", "127.0.0.1", "10000"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  minio:
+    container_name: emulated-oracle
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: ${ORACLE_STORAGE_ACCESS_KEY_ID:-test-access-key}
+      MINIO_ROOT_PASSWORD: ${ORACLE_STORAGE_SECRET_ACCESS_KEY:-test-secret-key}
+    volumes:
+      - miniodata:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  storage-init:
+    container_name: storage-initializer
+    image: amazon/aws-cli:latest
+    entrypoint: /bin/sh
+    command:
+      - -c
+      - >-
+        until aws --endpoint-url http://localstack:4566 s3api head-bucket
+        --bucket profiles 2>/dev/null; do
+        aws --endpoint-url http://localstack:4566 s3 mb s3://profiles || true;
+        sleep 2; done;
+        until aws --endpoint-url http://minio:9000 s3api head-bucket
+        --bucket profiles 2>/dev/null; do
+        aws --endpoint-url http://minio:9000 s3 mb s3://profiles || true;
+        sleep 2; done;
+    environment:
+      AWS_ACCESS_KEY_ID: ${AWS_STORAGE_ACCESS_KEY_ID:-test-access-key}
+      AWS_SECRET_ACCESS_KEY: ${AWS_STORAGE_SECRET_ACCESS_KEY:-test-secret-key}
+      AWS_DEFAULT_REGION: ${AWS_STORAGE_REGION:-us-east-1}
+    depends_on:
+      localstack:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+
   backend:
-    container_name: app_backend
+    container_name: backend
     image: node:24-alpine
     working_dir: /app
     ports:
@@ -64,9 +156,11 @@ services:
         condition: service_healthy
       redis:
         condition: service_started
+      storage-init:
+        condition: service_completed_successfully
 
   frontend:
-    container_name: app_frontend
+    container_name: frontend
     image: node:24-alpine
     working_dir: /app
     ports:
@@ -82,3 +176,7 @@ services:
 volumes:
   pgdata:
   redisdata:
+  localstackdata:
+  fakegcsdata:
+  azuritedata:
+  miniodata:

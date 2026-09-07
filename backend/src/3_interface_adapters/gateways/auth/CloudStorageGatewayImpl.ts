@@ -2,6 +2,7 @@
 import {
   BlobServiceClient,
   StorageSharedKeyCredential,
+  newPipeline,
 } from '@azure/storage-blob';
 import {
   GetObjectCommand,
@@ -48,8 +49,9 @@ export class CloudStorageGatewayImpl implements IStorageGateway {
 
     if (config.provider === 'gcp') {
       const storage = new Storage({
-        projectId: config.projectId,
-        keyFilename: config.keyFilename,
+        ...(config.projectId && { projectId: config.projectId }),
+        ...(config.keyFilename && { keyFilename: config.keyFilename }),
+        ...(config.endpoint && { apiEndpoint: config.endpoint }),
       });
       this.gcpBucket = storage.bucket(config.bucket);
       return;
@@ -66,10 +68,11 @@ export class CloudStorageGatewayImpl implements IStorageGateway {
         config.accountName,
         config.accountKey,
       );
-      const service = new BlobServiceClient(
-        `https://${config.accountName}.blob.core.windows.net`,
-        credential,
-      );
+      const serviceEndpoint =
+        config.endpoint ||
+        `https://${config.accountName}.blob.core.windows.net`;
+      const pipeline = newPipeline(credential);
+      const service = new BlobServiceClient(serviceEndpoint, pipeline);
       this.azureContainer = service.getContainerClient(config.container);
       return;
     }
@@ -87,7 +90,9 @@ export class CloudStorageGatewayImpl implements IStorageGateway {
     this.s3Client = new S3Client({
       region: config.region,
       endpoint: config.endpoint,
-      forcePathStyle: config.provider === 'oracle',
+      forcePathStyle:
+        config.provider === 'oracle' ||
+        (config.provider === 'aws' && Boolean(config.endpoint)),
       credentials: {
         accessKeyId: config.accessKeyId,
         secretAccessKey: config.secretAccessKey,
@@ -100,6 +105,8 @@ export class CloudStorageGatewayImpl implements IStorageGateway {
 
     try {
       if (this.config.provider === 'gcp') {
+        const [exists] = (await this.gcpBucket?.exists()) ?? [false];
+        if (!exists) await this.gcpBucket?.create();
         await this.gcpBucket?.file(objectName).save(buffer, {
           resumable: false,
           contentType: 'image/jpeg',
@@ -108,6 +115,7 @@ export class CloudStorageGatewayImpl implements IStorageGateway {
       }
 
       if (this.config.provider === 'azure') {
+        await this.azureContainer?.createIfNotExists();
         await this.azureContainer
           ?.getBlockBlobClient(objectName)
           .uploadData(buffer, {

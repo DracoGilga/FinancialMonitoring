@@ -28,6 +28,65 @@ To run this project locally, you will need to have the following installed on yo
 - [Docker](https://www.docker.com/get-started)
 - [Docker Compose](https://docs.docker.com/compose/install/)
 
+### Environment variables
+
+Create a `.env` file in the project root, next to `docker-compose.yml`. Use
+placeholders or environment-specific values; never commit real passwords,
+tokens, private keys, or cloud credentials.
+
+```env
+POSTGRES_USER=your-postgres-user
+POSTGRES_PASSWORD=your-postgres-password
+POSTGRES_DB=financial_db
+DATABASE_URL="postgresql://your-postgres-user:your-postgres-password@db:5432/financial_db?schema=public"
+
+REDIS_PASSWORD=your-redis-password
+REDIS_DATABASES=2
+
+JWT_SECRET=replace-with-a-long-random-secret
+JWT_EXPIRES_IN_MINUTES=120
+REFRESH_TOKEN_EXPIRES_IN_DAYS=30
+HASH_SALT_ROUNDS=12
+
+GOOGLE_CLIENT_ID=your-google-client-id
+GOOGLE_CLIENT_SECRET=your-google-client-secret
+GOOGLE_CALLBACK_URL=http://localhost:3000/auth/google/callback
+
+FACEBOOK_APP_ID=your-facebook-app-id
+FACEBOOK_APP_SECRET=your-facebook-app-secret
+
+# Storage provider: local, aws, gcp, azure, or oracle
+STORAGE_PROVIDER=local
+
+# Local storage. Use C:/test on Windows, or an absolute/relative path on Linux/macOS.
+BASE_UPLOAD_PATH=./uploads
+
+# Common cloud storage settings
+STORAGE_BUCKET=your-bucket-name
+STORAGE_REGION=your-region
+STORAGE_ACCESS_KEY_ID=your-access-key
+STORAGE_SECRET_ACCESS_KEY=your-secret-key
+STORAGE_ENDPOINT=
+
+# Google Cloud Storage
+GCP_PROJECT_ID=your-gcp-project
+GOOGLE_APPLICATION_CREDENTIALS=/absolute/path/to/service-account.json
+
+# Azure Blob Storage
+AZURE_STORAGE_ACCOUNT=your-storage-account
+AZURE_STORAGE_KEY=your-storage-key
+AZURE_STORAGE_CONTAINER=profiles
+
+# Oracle Object Storage uses an S3-compatible endpoint
+# STORAGE_ENDPOINT=https://your-namespace.compat.objectstorage.your-region.oraclecloud.com
+```
+
+For Docker, the backend receives the upload directory as `/app/uploads`. The
+host directory is taken from `BASE_UPLOAD_PATH` and mounted into the container.
+When `STORAGE_PROVIDER=local`, cloud variables can remain as placeholders. For
+cloud storage, configure the credentials through your deployment secret
+manager instead of committing them to the repository.
+
 ### Running the Application
 
 The easiest and recommended way to initialize and run both the frontend and backend simultaneously is by using Docker Compose.
@@ -57,6 +116,43 @@ To stop the running containers, execute:
 ```bash
 docker compose down
 ```
+
+### Backend checks
+
+Run these commands from the `backend` directory:
+
+```bash
+npm run type-check
+npm run lint -- --no-fix
+npm test -- --runInBand
+npm run build
+```
+
+To run the Redis integration test, start the Docker services and use:
+
+```bash
+docker compose exec -e REDIS_INTEGRATION=true backend npm test -- --runInBand
+```
+
+The regular test command skips the Redis integration suite when
+`REDIS_INTEGRATION` is not set to `true`.
+
+### API endpoints
+
+The backend is available at `http://localhost:3001` when using Docker. The
+Swagger documentation is available at `http://localhost:3001/api/docs`.
+
+Authenticated profile operations include:
+
+```text
+PATCH /auth/me
+POST  /auth/profile-picture/upload
+GET   /auth/profile-picture/me
+```
+
+These endpoints require an access token in the `Authorization: Bearer <token>`
+header. The profile picture endpoints accept and return images through the
+backend; they do not download images from arbitrary external URLs.
 
 ### Continuous integration
 

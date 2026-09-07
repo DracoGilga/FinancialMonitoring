@@ -1,3 +1,4 @@
+// test/update-user.spec.ts
 import { describe, expect, it, jest } from '@jest/globals';
 import { User } from '../src/1_entities/auth/User';
 import { IAuthCommandGateway } from '../src/2_use_cases/auth/shared_ports/IAuthCommandGateway';
@@ -28,6 +29,8 @@ const createInteractor = (user: User | null, emailUser: User | null = null) => {
     saveNewOAuthUser: jest.fn<IAuthCommandGateway['saveNewOAuthUser']>(),
     saveNewUser: jest.fn<IAuthCommandGateway['saveNewUser']>(),
     updateUser: jest.fn<IAuthCommandGateway['updateUser']>(),
+    updateProfilePicture:
+      jest.fn<IAuthCommandGateway['updateProfilePicture']>(),
   };
   const outputPort: jest.Mocked<IUpdateUserOutputPort> = {
     presentSuccess: jest.fn<IUpdateUserOutputPort['presentSuccess']>(
@@ -87,7 +90,7 @@ describe('update user', () => {
 
     expect(result).toEqual({
       status: 'error',
-      message: 'El correo ya está registrado',
+      message: 'Email is already registered',
     });
     expect(update.commandGateway.updateUser).not.toHaveBeenCalled();
   });
@@ -102,7 +105,7 @@ describe('update user', () => {
 
     expect(result).toEqual({
       status: 'error',
-      message: 'El usuario no existe',
+      message: 'User does not exist',
     });
     expect(update.commandGateway.updateUser).not.toHaveBeenCalled();
   });

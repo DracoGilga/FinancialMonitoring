@@ -1,3 +1,4 @@
+// src/2_use_cases/auth/shared_ports/ISessionStore.ts
 export interface SessionRecord {
   userId: string;
   expiresAt: Date;

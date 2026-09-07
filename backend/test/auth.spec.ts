@@ -36,6 +36,7 @@ const createAuthCommandGateway = (): jest.Mocked<IAuthCommandGateway> => ({
   saveNewOAuthUser: mock<IAuthCommandGateway['saveNewOAuthUser']>(),
   saveNewUser: mock<IAuthCommandGateway['saveNewUser']>(),
   updateUser: mock<IAuthCommandGateway['updateUser']>(),
+  updateProfilePicture: mock<IAuthCommandGateway['updateProfilePicture']>(),
 });
 
 describe('manual registration', () => {
@@ -89,8 +90,8 @@ describe('manual registration', () => {
   });
 
   it.each([
-    ['duplicate email', activeUser(), 'El correo ya está registrado'],
-    ['invalid email', null, 'El formato del correo es inválido'],
+    ['duplicate email', activeUser(), 'Email is already registered'],
+    ['invalid email', null, 'Invalid email format'],
   ])('rejects %s', async (_caseName, existingUser, message) => {
     const queryGateway: jest.Mocked<IAuthQueryGateway> = {
       findUserByEmail:
@@ -207,8 +208,8 @@ describe('manual login and authorization rules', () => {
   });
 
   it.each([
-    ['unknown user', null, true, 'Credenciales inválidas'],
-    ['wrong password', activeUser(), false, 'Credenciales inválidas'],
+    ['unknown user', null, true, 'Invalid credentials'],
+    ['wrong password', activeUser(), false, 'Invalid credentials'],
     [
       'inactive user',
       new User(
@@ -220,7 +221,7 @@ describe('manual login and authorization rules', () => {
         'stored-hash',
       ),
       true,
-      'El usuario está inactivo',
+      'User is inactive',
     ],
   ])('rejects %s', async (_caseName, user, passwordValid, message) => {
     const login = createLogin(user, passwordValid);
@@ -340,7 +341,7 @@ describe('OAuth login', () => {
       login.interactor.execute(
         new LoginOAuthRequest('google', 'provider-token'),
       ),
-    ).rejects.toThrow('El usuario está inactivo');
+    ).rejects.toThrow('User is inactive');
     expect(login.tokenGenerator.generateAccessToken).not.toHaveBeenCalled();
   });
 });

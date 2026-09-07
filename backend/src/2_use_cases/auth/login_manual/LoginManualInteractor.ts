@@ -31,17 +31,17 @@ export class LoginManualInteractor implements ILoginInputPort {
       const user = await this.authQueryGateway.findUserByEmail(request.email);
 
       if (!user) {
-        throw new Error('Credenciales inválidas');
+        throw new Error('Invalid credentials');
       }
 
       if (!user.canLogin()) {
-        throw new Error('El usuario está inactivo');
+        throw new Error('User is inactive');
       }
 
       const storedHash = user.getPasswordHash();
 
       if (!storedHash) {
-        throw new Error('Credenciales inválidas');
+        throw new Error('Invalid credentials');
       }
 
       const isPasswordValid = await this.passwordHasher.compare(
@@ -50,7 +50,7 @@ export class LoginManualInteractor implements ILoginInputPort {
       );
 
       if (!isPasswordValid) {
-        throw new Error('Credenciales inválidas');
+        throw new Error('Invalid credentials');
       }
 
       const accessToken = this.tokenGenerator.generateAccessToken(

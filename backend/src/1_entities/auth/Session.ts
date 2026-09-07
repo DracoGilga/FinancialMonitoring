@@ -1,4 +1,4 @@
-// src/1:ebtutues/auth/Session.ts
+// src/1_entities/auth/Session.ts
 export class Session {
   constructor(
     public readonly id: string,

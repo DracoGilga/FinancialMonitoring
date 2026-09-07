@@ -28,7 +28,7 @@ export class RegisterManualInteractor implements IRegisterManualInputPort {
         request.email,
       );
       if (existingUser) {
-        throw new Error('El correo ya está registrado');
+        throw new Error('Email is already registered');
       }
 
       const hashedPassword = await this.passwordHasher.hash(request.password);
@@ -43,7 +43,7 @@ export class RegisterManualInteractor implements IRegisterManualInputPort {
       );
 
       if (!newUser.hasValidEmail()) {
-        throw new Error('El formato del correo es inválido');
+        throw new Error('Invalid email format');
       }
 
       await this.authCommandGateway.saveNewUser(newUser);

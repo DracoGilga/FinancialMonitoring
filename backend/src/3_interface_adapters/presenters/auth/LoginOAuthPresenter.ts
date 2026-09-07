@@ -1,3 +1,4 @@
+// src/3_interface_adapters/presenters/auth/LoginOAuthPresenter.ts
 import { HttpException, HttpStatus } from '@nestjs/common';
 import {
   ILoginOAuthOutputPort,

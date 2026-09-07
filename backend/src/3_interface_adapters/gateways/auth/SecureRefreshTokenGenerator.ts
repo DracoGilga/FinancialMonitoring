@@ -1,3 +1,4 @@
+// src/3_interface_adapters/gateways/auth/SecureRefreshTokenGenerator.ts
 import { createHash, randomBytes } from 'node:crypto';
 import type { IRefreshTokenGenerator } from '../../../2_use_cases/auth/shared_ports/IRefreshTokenGenerator';
 

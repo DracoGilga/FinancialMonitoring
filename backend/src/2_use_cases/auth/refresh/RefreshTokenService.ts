@@ -1,3 +1,4 @@
+// src/2_use_cases/auth/refresh/RefreshTokenService.ts
 import type { IRefreshTokenGenerator } from '../shared_ports/IRefreshTokenGenerator';
 import type { ISessionStore } from '../shared_ports/ISessionStore';
 import type { ITokenGenerator } from '../shared_ports/ITokenGenerator';

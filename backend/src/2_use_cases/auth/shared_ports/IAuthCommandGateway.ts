@@ -11,4 +11,5 @@ export interface IAuthCommandGateway {
     userId: string,
     data: { email?: string; firstName?: string; lastName?: string | null },
   ): Promise<void>;
+  updateProfilePicture(userId: string, photoPath: string): Promise<void>;
 }

@@ -63,7 +63,7 @@ export class LoginOAuthInteractor implements ILoginOAuthInputPort {
         await this.authCommandGateway.saveNewOAuthUser(user, oauthAccount);
       } else {
         if (!user.canLogin()) {
-          throw new Error('El usuario está inactivo');
+          throw new Error('User is inactive');
         }
       }
 

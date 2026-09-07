@@ -1,3 +1,4 @@
+// test/redis-session-store.integration.spec.ts
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import { RedisSessionStore } from '../src/3_interface_adapters/gateways/auth/RedisSessionStore';
 import { SecureRefreshTokenGenerator } from '../src/3_interface_adapters/gateways/auth/SecureRefreshTokenGenerator';

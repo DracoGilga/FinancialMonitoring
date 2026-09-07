@@ -1,3 +1,4 @@
+// src/3_interface_adapters/controllers/auth/guards/JwtAuthGuard.ts
 import {
   CanActivate,
   ExecutionContext,
@@ -18,7 +19,7 @@ export class JwtAuthGuard implements CanActivate {
     const authorization = request.headers.authorization;
 
     if (!authorization?.startsWith('Bearer ')) {
-      throw new UnauthorizedException('Se requiere un token de acceso');
+      throw new UnauthorizedException('An access token is required');
     }
 
     try {
@@ -32,13 +33,13 @@ export class JwtAuthGuard implements CanActivate {
         typeof payload.sub !== 'string' ||
         typeof payload.email !== 'string'
       ) {
-        throw new UnauthorizedException('El token no es válido');
+        throw new UnauthorizedException('The token is invalid');
       }
 
       request.user = { userId: payload.sub, email: payload.email };
       return true;
     } catch {
-      throw new UnauthorizedException('El token no es válido o ha expirado');
+      throw new UnauthorizedException('The token is invalid or expired');
     }
   }
 }

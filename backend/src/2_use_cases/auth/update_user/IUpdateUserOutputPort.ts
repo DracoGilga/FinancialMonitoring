@@ -1,3 +1,4 @@
+// src/2_use_cases/auth/update_user/IUpdateUserOutputPort.ts
 import { UpdateUserResponse } from './UpdateUserResponse';
 
 export interface UpdateUserSuccessViewModel {

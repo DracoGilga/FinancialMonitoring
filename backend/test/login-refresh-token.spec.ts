@@ -1,3 +1,4 @@
+// test/login-refresh-token.spec.ts
 import { describe, expect, it, jest } from '@jest/globals';
 import { User } from '../src/1_entities/auth/User';
 import { LoginManualInteractor } from '../src/2_use_cases/auth/login_manual/LoginManualInteractor';
@@ -32,6 +33,7 @@ describe('login refresh token contract', () => {
       saveNewOAuthUser: mock<IAuthCommandGateway['saveNewOAuthUser']>(),
       saveNewUser: mock<IAuthCommandGateway['saveNewUser']>(),
       updateUser: mock<IAuthCommandGateway['updateUser']>(),
+      updateProfilePicture: mock<IAuthCommandGateway['updateProfilePicture']>(),
     };
     const passwordHasher: jest.Mocked<IPasswordHasher> = {
       hash: mock<IPasswordHasher['hash']>(),

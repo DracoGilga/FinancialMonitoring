@@ -3,6 +3,7 @@ import { describe, expect, it } from '@jest/globals';
 import { validate } from 'class-validator';
 import { RegisterDto } from '../src/3_interface_adapters/controllers/auth/dto/RegisterDto';
 import { LoginDto } from '../src/3_interface_adapters/controllers/auth/dto/login.dto';
+import { UpdateUserDto } from '../src/3_interface_adapters/controllers/auth/dto/UpdateUserDto';
 
 const validPassword = 'Password1!';
 
@@ -52,6 +53,42 @@ describe('authentication input validation', () => {
     const messages = await validationMessages(dto);
 
     expect(messages).toContain('the first name contains invalid characters');
+  });
+
+  it('rejects script markup in profile updates', async () => {
+    const dto = Object.assign(new UpdateUserDto(), {
+      firstName: '<script>alert(1)</script>',
+      lastName: 'Valid',
+    });
+
+    const messages = await validationMessages(dto);
+
+    expect(messages.some((message) => message.includes('must match'))).toBe(
+      true,
+    );
+  });
+
+  it('rejects unknown profile update properties', async () => {
+    const dto = Object.assign(new UpdateUserDto(), {
+      firstName: 'Valid',
+      role: 'admin',
+    });
+
+    const errors = await validate(dto, {
+      whitelist: true,
+      forbidNonWhitelisted: true,
+    });
+
+    expect(errors).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          property: 'role',
+          constraints: expect.objectContaining({
+            whitelistValidation: expect.any(String),
+          }),
+        }),
+      ]),
+    );
   });
 
   it.each([

@@ -1,3 +1,4 @@
+// src/2_use_cases/auth/update_user/UpdateUserInteractor.ts
 import {
   IUpdateUserOutputPort,
   UpdateUserResultViewModel,
@@ -22,7 +23,7 @@ export class UpdateUserInteractor implements IUpdateUserInputPort {
       const user = await this.authQueryGateway.findUserById(request.userId);
 
       if (!user) {
-        throw new Error('El usuario no existe');
+        throw new Error('User does not exist');
       }
 
       if (request.email && request.email !== user.email) {
@@ -30,7 +31,7 @@ export class UpdateUserInteractor implements IUpdateUserInputPort {
           request.email,
         );
         if (userWithEmail && userWithEmail.id !== user.id) {
-          throw new Error('El correo ya está registrado');
+          throw new Error('Email is already registered');
         }
       }
 
@@ -43,7 +44,7 @@ export class UpdateUserInteractor implements IUpdateUserInputPort {
       };
 
       if (Object.keys(data).length === 0) {
-        throw new Error('Debe proporcionar al menos un campo para actualizar');
+        throw new Error('At least one field must be provided for update');
       }
 
       await this.authCommandGateway.updateUser(request.userId, data);

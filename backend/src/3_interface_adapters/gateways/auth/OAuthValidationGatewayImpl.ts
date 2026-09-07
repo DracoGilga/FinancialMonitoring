@@ -49,7 +49,7 @@ export class OAuthValidationGatewayImpl implements IOAuthValidationGateway {
       return {
         providerId: payload.sub,
         email: payload.email,
-        firstName: payload.given_name || 'Usuario',
+        firstName: payload.given_name || 'User',
         lastName: payload.family_name || null,
       };
     } catch {
@@ -95,7 +95,7 @@ export class OAuthValidationGatewayImpl implements IOAuthValidationGateway {
       return {
         providerId: data.id,
         email: data.email,
-        firstName: data.first_name || 'Usuario',
+        firstName: data.first_name || 'User',
         lastName: data.last_name || null,
       };
     } catch (error) {

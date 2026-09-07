@@ -1,6 +1,8 @@
 // src/4_frameworks_and_drivers/modules/AuthModule.ts
 import { Module } from '@nestjs/common';
+import * as path from 'node:path';
 import { AuthController } from '../../3_interface_adapters/controllers/auth/AuthController';
+import { ProfilePictureController } from '../../3_interface_adapters/controllers/auth/ProfilePictureController';
 import { PrismaService } from '../../3_interface_adapters/gateways/db/PrismaService';
 import { AuthQueryGatewayImpl } from '../../3_interface_adapters/gateways/auth/AuthQueryGatewayImpl';
 import { AuthCommandGatewayImpl } from '../../3_interface_adapters/gateways/auth/AuthCommandGatewayImpl';
@@ -29,9 +31,19 @@ import type { IRefreshTokenGenerator } from '../../2_use_cases/auth/shared_ports
 import { UpdateUserInteractor } from '../../2_use_cases/auth/update_user/UpdateUserInteractor';
 import { UpdateUserPresenter } from '../../3_interface_adapters/presenters/auth/UpdateUserPresenter';
 import type { IUpdateUserOutputPort } from '../../2_use_cases/auth/update_user/IUpdateUserOutputPort';
+import { UpdateProfilePictureInteractor } from '../../2_use_cases/auth/update_profile_picture/UpdateProfilePictureInteractor';
+import { UpdateProfilePicturePresenter } from '../../3_interface_adapters/presenters/auth/UpdateProfilePicturePresenter';
+import { GetProfilePictureInteractor } from '../../2_use_cases/auth/get_profile_picture/GetProfilePictureInteractor';
+import { GetProfilePicturePresenter } from '../../3_interface_adapters/presenters/auth/GetProfilePicturePresenter';
+import { LocalStorageGatewayImpl } from '../../3_interface_adapters/gateways/auth/LocalStorageGatewayImpl';
+import { SharpImageProcessorImpl } from '../../3_interface_adapters/gateways/auth/SharpImageProcessorImpl';
+import {
+  CloudStorageGatewayImpl,
+  type CloudStorageConfig,
+} from '../../3_interface_adapters/gateways/auth/CloudStorageGatewayImpl';
 
 @Module({
-  controllers: [AuthController],
+  controllers: [AuthController, ProfilePictureController],
   providers: [
     PrismaService,
     {
@@ -77,6 +89,66 @@ import type { IUpdateUserOutputPort } from '../../2_use_cases/auth/update_user/I
     {
       provide: 'IAuthCommandGateway',
       useClass: AuthCommandGatewayImpl,
+    },
+    {
+      provide: 'IStorageGateway',
+      useFactory: () => {
+        const provider = process.env.STORAGE_PROVIDER || 'local';
+
+        if (provider !== 'local') {
+          if (
+            provider !== 'aws' &&
+            provider !== 'gcp' &&
+            provider !== 'azure' &&
+            provider !== 'oracle'
+          ) {
+            throw new Error(`Unsupported storage provider: ${provider}`);
+          }
+
+          const config: CloudStorageConfig = {
+            provider,
+            bucket: process.env.STORAGE_BUCKET || '',
+            region: process.env.STORAGE_REGION,
+            accessKeyId: process.env.STORAGE_ACCESS_KEY_ID,
+            secretAccessKey: process.env.STORAGE_SECRET_ACCESS_KEY,
+            endpoint: process.env.STORAGE_ENDPOINT,
+            projectId: process.env.GCP_PROJECT_ID,
+            keyFilename: process.env.GOOGLE_APPLICATION_CREDENTIALS,
+            accountName: process.env.AZURE_STORAGE_ACCOUNT,
+            accountKey: process.env.AZURE_STORAGE_KEY,
+            container: process.env.AZURE_STORAGE_CONTAINER,
+          };
+
+          return new CloudStorageGatewayImpl(config);
+        }
+
+        const baseUploadPath = process.env.BASE_UPLOAD_PATH;
+        const uploadDirectory = baseUploadPath
+          ? path.join(path.resolve(baseUploadPath), 'profiles')
+          : path.join(process.cwd(), 'uploads', 'profiles');
+
+        return new LocalStorageGatewayImpl(uploadDirectory);
+      },
+    },
+    {
+      provide: 'IImageProcessorGateway',
+      useClass: SharpImageProcessorImpl,
+    },
+    {
+      provide: 'IUpdateProfilePictureOutputPort',
+      useClass: UpdateProfilePicturePresenter,
+    },
+    {
+      provide: 'IUpdateProfilePictureInputPort',
+      useClass: UpdateProfilePictureInteractor,
+    },
+    {
+      provide: 'IGetProfilePictureOutputPort',
+      useClass: GetProfilePicturePresenter,
+    },
+    {
+      provide: 'IGetProfilePictureInputPort',
+      useClass: GetProfilePictureInteractor,
     },
     {
       provide: 'IUpdateUserOutputPort',

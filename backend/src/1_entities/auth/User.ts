@@ -1,4 +1,4 @@
-// src/1:ebtutues/auth/User.ts
+// src/1_entities/auth/User.ts
 export class User {
   constructor(
     public readonly id: string,

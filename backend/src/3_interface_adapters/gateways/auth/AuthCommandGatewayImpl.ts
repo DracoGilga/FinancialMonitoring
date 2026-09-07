@@ -1,10 +1,10 @@
 // src/3_interface_adapters/gateways/auth/AuthCommandGatewayImpl.ts
-import { Injectable } from '@nestjs/common';
 import { IAuthCommandGateway } from '../../../2_use_cases/auth/shared_ports/IAuthCommandGateway';
 import { User } from '../../../1_entities/auth/User';
 import { OAuthAccount } from '../../../1_entities/auth/OAuthAccount';
 import { Session } from '../../../1_entities/auth/Session';
 import { PrismaService } from '../db/PrismaService';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 
 @Injectable()
 export class AuthCommandGatewayImpl implements IAuthCommandGateway {
@@ -67,5 +67,22 @@ export class AuthCommandGatewayImpl implements IAuthCommandGateway {
         expiresAt: session.expiresAt,
       },
     });
+  }
+
+  async updateProfilePicture(userId: string, photoPath: string): Promise<void> {
+    try {
+      await this.prisma.user.update({
+        where: {
+          id: userId,
+        },
+        data: {
+          profilePicture: photoPath,
+        },
+      });
+    } catch {
+      throw new InternalServerErrorException(
+        'Error updating profile picture in database',
+      );
+    }
   }
 }

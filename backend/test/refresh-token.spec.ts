@@ -89,7 +89,7 @@ describe('RefreshTokenService', () => {
     ['different User-Agent', '127.0.0.1', 'other-agent'],
   ])(
     'denies a request with a mismatched %s and deletes the session',
-    async (_caseName, ip, userAgent) => {
+    async (_caseName: string, ip: string, userAgent: string) => {
       const refresh = createService();
 
       await expect(

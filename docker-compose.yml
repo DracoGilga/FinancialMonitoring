@@ -136,7 +136,7 @@ services:
       - "${BASE_UPLOAD_PATH:-./uploads}:/app/uploads"
     environment:
       BASE_UPLOAD_PATH: /app/uploads
-    command: sh -c "npm install && npx prisma generate && npm test -- --runInBand && npx prisma db push && npm run start:dev"
+    command: sh -c "npm install -g pnpm && pnpm install && pnpm prisma generate && pnpm test --runInBand && pnpm prisma db push && pnpm start:dev"
     env_file:
       - .env
     healthcheck:

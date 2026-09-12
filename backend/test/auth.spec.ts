@@ -92,47 +92,50 @@ describe('manual registration', () => {
   it.each([
     ['duplicate email', activeUser(), 'Email is already registered'],
     ['invalid email', null, 'Invalid email format'],
-  ])('rejects %s', async (_caseName, existingUser, message) => {
-    const queryGateway: jest.Mocked<IAuthQueryGateway> = {
-      findUserByEmail:
-        mock<IAuthQueryGateway['findUserByEmail']>().mockResolvedValue(
-          existingUser,
+  ])(
+    'rejects %s',
+    async (_caseName: string, existingUser: User | null, message: string) => {
+      const queryGateway: jest.Mocked<IAuthQueryGateway> = {
+        findUserByEmail:
+          mock<IAuthQueryGateway['findUserByEmail']>().mockResolvedValue(
+            existingUser,
+          ),
+        findUserById:
+          mock<IAuthQueryGateway['findUserById']>().mockResolvedValue(null),
+      };
+      const commandGateway = createAuthCommandGateway();
+      const passwordHasher: jest.Mocked<IPasswordHasher> = {
+        hash: mock<IPasswordHasher['hash']>().mockResolvedValue(
+          'hashed-password',
         ),
-      findUserById:
-        mock<IAuthQueryGateway['findUserById']>().mockResolvedValue(null),
-    };
-    const commandGateway = createAuthCommandGateway();
-    const passwordHasher: jest.Mocked<IPasswordHasher> = {
-      hash: mock<IPasswordHasher['hash']>().mockResolvedValue(
-        'hashed-password',
-      ),
-      compare: mock<IPasswordHasher['compare']>(),
-    };
-    const outputPort: jest.Mocked<IRegisterManualOutputPort> = {
-      presentSuccess: mock<IRegisterManualOutputPort['presentSuccess']>(),
-      presentError: mock<IRegisterManualOutputPort['presentError']>(
-        (error) => ({
-          status: 'error' as const,
-          message: error.message,
-        }),
-      ),
-    };
-    const interactor = new RegisterManualInteractor(
-      queryGateway,
-      commandGateway,
-      passwordHasher,
-      outputPort,
-    );
+        compare: mock<IPasswordHasher['compare']>(),
+      };
+      const outputPort: jest.Mocked<IRegisterManualOutputPort> = {
+        presentSuccess: mock<IRegisterManualOutputPort['presentSuccess']>(),
+        presentError: mock<IRegisterManualOutputPort['presentError']>(
+          (error) => ({
+            status: 'error' as const,
+            message: error.message,
+          }),
+        ),
+      };
+      const interactor = new RegisterManualInteractor(
+        queryGateway,
+        commandGateway,
+        passwordHasher,
+        outputPort,
+      );
 
-    const result = await interactor.execute({
-      email: existingUser ? 'user@example.com' : 'invalid-email',
-      password: 'plain-password',
-      firstName: 'New',
-    });
+      const result = await interactor.execute({
+        email: existingUser ? 'user@example.com' : 'invalid-email',
+        password: 'plain-password',
+        firstName: 'New',
+      });
 
-    expect(result).toEqual({ status: 'error', message });
-    expect(commandGateway.saveNewUser).not.toHaveBeenCalled();
-  });
+      expect(result).toEqual({ status: 'error', message });
+      expect(commandGateway.saveNewUser).not.toHaveBeenCalled();
+    },
+  );
 });
 
 describe('manual login and authorization rules', () => {
@@ -223,17 +226,25 @@ describe('manual login and authorization rules', () => {
       true,
       'User is inactive',
     ],
-  ])('rejects %s', async (_caseName, user, passwordValid, message) => {
-    const login = createLogin(user, passwordValid);
+  ])(
+    'rejects %s',
+    async (
+      _caseName: string,
+      user: User | null,
+      passwordValid: boolean,
+      message: string,
+    ) => {
+      const login = createLogin(user, passwordValid);
 
-    const result = await login.interactor.execute(
-      new LoginManualRequest('user@example.com', 'plain-password'),
-    );
+      const result = await login.interactor.execute(
+        new LoginManualRequest('user@example.com', 'plain-password'),
+      );
 
-    expect(result).toEqual({ status: 'error', message });
-    expect(login.commandGateway.saveSession).not.toHaveBeenCalled();
-    expect(login.tokenGenerator.generateAccessToken).not.toHaveBeenCalled();
-  });
+      expect(result).toEqual({ status: 'error', message });
+      expect(login.commandGateway.saveSession).not.toHaveBeenCalled();
+      expect(login.tokenGenerator.generateAccessToken).not.toHaveBeenCalled();
+    },
+  );
 });
 
 describe('OAuth login', () => {

@@ -98,7 +98,7 @@ describe('authentication input validation', () => {
     ['without lowercase', 'PASSWORD1!'],
     ['without number', 'Password!'],
     ['without special character', 'Password1'],
-  ])('rejects a password %s', async (_caseName, password) => {
+  ])('rejects a password %s', async (_caseName: string, password: string) => {
     const dto = Object.assign(new RegisterDto(), {
       email: 'user@example.com',
       password,

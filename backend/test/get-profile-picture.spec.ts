@@ -14,9 +14,17 @@ describe('GetProfilePictureInteractor', () => {
     };
     const outputPort: jest.Mocked<IGetProfilePictureOutputPort> = {
       presentSuccess: jest.fn<IGetProfilePictureOutputPort['presentSuccess']>(
-        (response) => response,
+        (
+          response: Parameters<
+            IGetProfilePictureOutputPort['presentSuccess']
+          >[0],
+        ) => response,
       ),
-      presentError: jest.fn<IGetProfilePictureOutputPort['presentError']>(),
+      presentError: jest.fn<IGetProfilePictureOutputPort['presentError']>(
+        (error: Error) => {
+          throw error;
+        },
+      ),
     };
     const interactor = new GetProfilePictureInteractor(
       outputPort,
@@ -45,7 +53,7 @@ describe('GetProfilePictureInteractor', () => {
     const outputPort: jest.Mocked<IGetProfilePictureOutputPort> = {
       presentSuccess: jest.fn<IGetProfilePictureOutputPort['presentSuccess']>(),
       presentError: jest.fn<IGetProfilePictureOutputPort['presentError']>(
-        (error) => {
+        (error: Error) => {
           throw error;
         },
       ),

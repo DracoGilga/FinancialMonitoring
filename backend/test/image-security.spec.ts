@@ -33,7 +33,7 @@ describe('image input security', () => {
     ['SVG payload', Buffer.from('<svg><script>alert(1)</script></svg>')],
     ['remote image URL', Buffer.from('https://evil.example/payload.jpg')],
     ['random binary', Buffer.from([0, 1, 2, 3, 4, 5])],
-  ])('rejects a %s as an image', async (_name, payload) => {
+  ])('rejects a %s as an image', async (_name: string, payload: Buffer) => {
     const processor = new SharpImageProcessorImpl();
 
     await expect(processor.sanitizeAndProcess(payload)).rejects.toBeInstanceOf(

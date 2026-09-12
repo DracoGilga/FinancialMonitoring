@@ -78,3 +78,11 @@ out
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# agent
+backend/.agents/
+backend/.claude/
+backend/.cursor/
+backend/.devin/
+frontend/AGENTS.md
+frontend/CLAUDE.md

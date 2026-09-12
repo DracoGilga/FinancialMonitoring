@@ -34,12 +34,17 @@ const createInteractor = (user: User | null, emailUser: User | null = null) => {
   };
   const outputPort: jest.Mocked<IUpdateUserOutputPort> = {
     presentSuccess: jest.fn<IUpdateUserOutputPort['presentSuccess']>(
-      (response) => ({ status: 'success' as const, data: response }),
+      (response: Parameters<IUpdateUserOutputPort['presentSuccess']>[0]) => ({
+        status: 'success' as const,
+        data: response,
+      }),
     ),
-    presentError: jest.fn<IUpdateUserOutputPort['presentError']>((error) => ({
-      status: 'error' as const,
-      message: error.message,
-    })),
+    presentError: jest.fn<IUpdateUserOutputPort['presentError']>(
+      (error: Error) => ({
+        status: 'error' as const,
+        message: error.message,
+      }),
+    ),
   };
 
   return {

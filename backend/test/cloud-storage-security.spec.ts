@@ -17,7 +17,7 @@ describe('cloud storage configuration and object names', () => {
   it.each<CloudStorageConfig>([
     { provider: 'aws', ...baseConfig },
     { provider: 'oracle', ...baseConfig, endpoint: 'https://oracle.example' },
-  ])('rejects traversal for $provider', async (config) => {
+  ])('rejects traversal for $provider', async (config: CloudStorageConfig) => {
     const gateway = new CloudStorageGatewayImpl(config);
 
     await expect(

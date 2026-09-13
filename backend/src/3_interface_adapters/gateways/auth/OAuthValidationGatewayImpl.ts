@@ -5,15 +5,30 @@ import {
 } from '../../../2_use_cases/auth/login_oauth/IOAuthValidationGateway';
 import { OAuth2Client } from 'google-auth-library';
 
+interface GoogleTokenPayload {
+  sub?: string;
+  email?: string;
+  given_name?: string;
+  family_name?: string;
+}
+
+interface GoogleTokenClient {
+  verifyIdToken(options: {
+    idToken: string;
+    audience: string;
+  }): Promise<{ getPayload(): GoogleTokenPayload | undefined }>;
+}
+
 export class OAuthValidationGatewayImpl implements IOAuthValidationGateway {
-  private googleClient: OAuth2Client;
+  private readonly googleClient: GoogleTokenClient;
 
   constructor(
     private readonly googleClientId: string,
     private readonly facebookAppId: string,
     private readonly facebookAppSecret: string,
+    googleClient?: GoogleTokenClient,
   ) {
-    this.googleClient = new OAuth2Client(this.googleClientId);
+    this.googleClient = googleClient ?? new OAuth2Client(this.googleClientId);
   }
 
   public async verifyTokenAndGetProfile(

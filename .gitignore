@@ -86,3 +86,4 @@ backend/.cursor/
 backend/.devin/
 frontend/AGENTS.md
 frontend/CLAUDE.md
+pnpm-workspace.yaml

@@ -3,10 +3,12 @@ import { Module } from '@nestjs/common';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import { AuthModule } from './4_frameworks_and_drivers/modules/AuthModule';
+import { MarketModule } from './4_frameworks_and_drivers/modules/MarketModule';
 
 @Module({
   imports: [
     AuthModule,
+    MarketModule,
     ThrottlerModule.forRoot([
       {
         ttl: 60_000,

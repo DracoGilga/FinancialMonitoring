@@ -49,3 +49,30 @@ model Session {
 
   @@map("sessions")
 }
+
+model MonitoredStock {
+  id          String   @id @default(uuid())
+  symbol      String   @unique @map("symbol")
+  companyName String   @map("company_name")
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  history     StockHistory[]
+
+  @@map("monitored_stocks")
+}
+
+model StockHistory {
+  id              String   @id @default(uuid())
+  symbol          String   @map("symbol")
+  currentPrice    Float    @map("current_price")
+  openPrice       Float    @map("open_price")
+  closePrice      Float    @map("close_price")
+  marketTimestamp DateTime @map("market_timestamp")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  monitoredStock  MonitoredStock @relation(fields: [symbol], references: [symbol], onDelete: Cascade)
+
+  @@map("stock_history")
+}

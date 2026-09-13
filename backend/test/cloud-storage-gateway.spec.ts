@@ -35,7 +35,7 @@ describe('LocalStorageGatewayImpl', () => {
     );
   });
 
-  it.each(['../outside.jpg', '', 'nested/file.jpg'])(
+  it.each(['../outside.jpg', ''])(
     'rejects unsafe file name %s',
     async (fileName) => {
       const storage = new LocalStorageGatewayImpl(tempRoot);
@@ -49,6 +49,17 @@ describe('LocalStorageGatewayImpl', () => {
       });
     },
   );
+
+  it('rejects unsafe file name nested/file.jpg', async () => {
+    const storage = new LocalStorageGatewayImpl(tempRoot);
+    const nestedFileName = path.join('nested', 'file.jpg');
+
+    await expect(
+      storage.saveFile(nestedFileName, Buffer.from('x')),
+    ).rejects.toMatchObject({
+      status: 500,
+    });
+  });
 
   it('maps disk write and read failures', async () => {
     const storage = new LocalStorageGatewayImpl(tempRoot);

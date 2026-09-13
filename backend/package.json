@@ -24,9 +24,9 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1127.0",
     "@azure/storage-blob": "^12.33.0",
-    "@google-cloud/storage": "^8.0.1",
+    "@google-cloud/storage": "^8.1.0",
     "@nestjs/common": "^11.0.1",
-    "@nestjs/core": "^11.0.1",
+    "@nestjs/core": "^11.2.3",
     "@nestjs/platform-express": "^11.2.3",
     "@nestjs/swagger": "^11.4.7",
     "@nestjs/throttler": "^6.5.0",
@@ -90,5 +90,12 @@
     ],
     "coverageDirectory": "coverage",
     "testEnvironment": "node"
+  },
+  "pnpm": {
+    "overrides": {
+      "deepmerge-ts": ">=8.0.0",
+      "multer": ">=2.3.0",
+      "uuid": ">=11.1.1"
+    }
   }
 }

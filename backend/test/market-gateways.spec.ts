@@ -5,7 +5,6 @@ import { DataBursatilGatewayImpl } from '../src/3_interface_adapters/gateways/ma
 import { FinnhubGatewayImpl } from '../src/3_interface_adapters/gateways/market/FinnhubGatewayImpl';
 import { MarketstackGatewayImpl } from '../src/3_interface_adapters/gateways/market/MarketstackGatewayImpl';
 import { MassiveGatewayImpl } from '../src/3_interface_adapters/gateways/market/MassiveGatewayImpl';
-import { PolygonGatewayImpl } from '../src/3_interface_adapters/gateways/market/PolygonGatewayImpl';
 
 const jsonResponse = (body: unknown, ok = true, statusText = 'OK'): Response =>
   new Response(JSON.stringify(body), {
@@ -28,7 +27,6 @@ describe('HTTP market gateways', () => {
       () => new AlphaVantageGatewayImpl(''),
       'ALPHA_VANTAGE_API_KEY is required',
     ],
-    [() => new PolygonGatewayImpl(''), 'POLYGON_API_KEY is required'],
     [() => new MarketstackGatewayImpl(''), 'MARKETSTACK_API_KEY is required'],
     [() => new MassiveGatewayImpl(''), 'MASSIVE_API_KEY is required'],
     [() => new DataBursatilGatewayImpl(''), 'DATABURSATIL_API_KEY is required'],
@@ -167,42 +165,6 @@ describe('HTTP market gateways', () => {
     fetchSpy.mockResolvedValueOnce(jsonResponse({}, false, 'Unauthorized'));
     await expect(gateway.getQuote('AAPL')).rejects.toThrow(
       'Massive HTTP Error: Unauthorized',
-    );
-  });
-
-  it('maps Polygon responses, applies defaults and handles failures', async () => {
-    const gateway = new PolygonGatewayImpl('key');
-    fetchSpy.mockResolvedValueOnce(
-      jsonResponse({
-        ticker: {
-          min: { c: 110 },
-          day: { c: 109, o: 100 },
-          prevDay: { c: 98 },
-          updated: 1_700_000_000_000_000_000,
-        },
-      }),
-    );
-    await expect(gateway.getQuote('aapl')).resolves.toMatchObject({
-      symbol: 'AAPL',
-      currentPrice: 110,
-      openPrice: 100,
-      closePrice: 98,
-      marketTimestamp: new Date(1_700_000_000_000),
-    });
-
-    fetchSpy.mockResolvedValueOnce(jsonResponse({ ticker: { day: { c: 9 } } }));
-    await expect(gateway.getQuote('AAPL')).resolves.toMatchObject({
-      currentPrice: 9,
-      openPrice: 0,
-      closePrice: 0,
-    });
-    fetchSpy.mockResolvedValueOnce(jsonResponse({}));
-    await expect(gateway.getQuote('NONE')).rejects.toThrow(
-      'not found on Polygon',
-    );
-    fetchSpy.mockResolvedValueOnce(jsonResponse({}, false, 'Forbidden'));
-    await expect(gateway.getQuote('AAPL')).rejects.toThrow(
-      'Polygon HTTP Error: Forbidden',
     );
   });
 });

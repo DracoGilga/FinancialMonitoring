@@ -30,7 +30,6 @@ type GatewaySet = {
   marketstack: jest.Mocked<IStockMarketQueryGateway>;
   massive: jest.Mocked<IStockMarketQueryGateway>;
   dataBursatil: jest.Mocked<IStockMarketQueryGateway>;
-  polygon: jest.Mocked<IStockMarketQueryGateway>;
 };
 
 const createResilientGateway = () => {
@@ -41,7 +40,6 @@ const createResilientGateway = () => {
     marketstack: gateway(),
     massive: gateway(),
     dataBursatil: gateway(),
-    polygon: gateway(),
   };
   const resilient = new ResilientStockGatewayImpl(
     gateways.yahoo,
@@ -50,7 +48,6 @@ const createResilientGateway = () => {
     gateways.marketstack,
     gateways.massive,
     gateways.dataBursatil,
-    gateways.polygon,
   );
   return { resilient, gateways };
 };
@@ -77,14 +74,14 @@ describe('ResilientStockGatewayImpl', () => {
     );
     gateways.yahoo.getQuote.mockRejectedValue(new Error('Yahoo failed'));
     gateways.finnhub.getQuote.mockRejectedValue(new Error('Finnhub failed'));
-    gateways.polygon.getQuote.mockResolvedValue(stock);
+    gateways.alpha.getQuote.mockResolvedValue(stock);
 
     await expect(resilient.getQuote('WALMEX.MX')).resolves.toBe(stock);
     expect(gateways.dataBursatil.getQuote).toHaveBeenCalledTimes(1);
     expect(gateways.yahoo.getQuote).toHaveBeenCalledTimes(1);
     expect(gateways.finnhub.getQuote).toHaveBeenCalledTimes(1);
-    expect(gateways.polygon.getQuote).toHaveBeenCalledTimes(1);
-    expect(gateways.alpha.getQuote).not.toHaveBeenCalled();
+    expect(gateways.alpha.getQuote).toHaveBeenCalledTimes(1);
+    expect(gateways.massive.getQuote).not.toHaveBeenCalled();
     expect(console.warn).toHaveBeenCalledTimes(3);
   });
 
@@ -101,7 +98,6 @@ describe('ResilientStockGatewayImpl', () => {
     for (const provider of [
       gateways.yahoo,
       gateways.finnhub,
-      gateways.polygon,
       gateways.alpha,
       gateways.massive,
       gateways.marketstack,
@@ -112,12 +108,12 @@ describe('ResilientStockGatewayImpl', () => {
     await expect(resilient.getQuote('FAIL')).rejects.toThrow(
       '[Gateway Fatal] All market APIs failed for symbol: FAIL',
     );
-    expect(console.warn).toHaveBeenCalledTimes(6);
+    expect(console.warn).toHaveBeenCalledTimes(5);
   });
 });
 
 describe('MarketCommandGatewayImpl', () => {
-  type CreateStockHistory = PrismaService['stockHistory']['create'];
+  type CreateStockHistory = (args: object) => Promise<object>;
 
   it('persists a quote using connect-or-create', async () => {
     const create = mock<CreateStockHistory>().mockResolvedValue({

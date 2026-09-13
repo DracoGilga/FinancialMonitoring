@@ -19,7 +19,6 @@ import { DataBursatilGatewayImpl } from '../src/3_interface_adapters/gateways/ma
 import { FinnhubGatewayImpl } from '../src/3_interface_adapters/gateways/market/FinnhubGatewayImpl';
 import { MarketstackGatewayImpl } from '../src/3_interface_adapters/gateways/market/MarketstackGatewayImpl';
 import { MassiveGatewayImpl } from '../src/3_interface_adapters/gateways/market/MassiveGatewayImpl';
-import { PolygonGatewayImpl } from '../src/3_interface_adapters/gateways/market/PolygonGatewayImpl';
 import { YahooFinanceGatewayImpl } from '../src/3_interface_adapters/gateways/market/YahooFinanceGatewayImpl';
 import { MarketModule } from '../src/4_frameworks_and_drivers/modules/MarketModule';
 
@@ -45,7 +44,6 @@ describe('MarketModule integration', () => {
   let yahoo: jest.Mocked<IStockMarketQueryGateway>;
   let finnhub: jest.Mocked<IStockMarketQueryGateway>;
   let alpha: jest.Mocked<IStockMarketQueryGateway>;
-  let polygon: jest.Mocked<IStockMarketQueryGateway>;
   let marketstack: jest.Mocked<IStockMarketQueryGateway>;
   let massive: jest.Mocked<IStockMarketQueryGateway>;
   let dataBursatil: jest.Mocked<IStockMarketQueryGateway>;
@@ -55,7 +53,6 @@ describe('MarketModule integration', () => {
     yahoo = queryGateway();
     finnhub = queryGateway();
     alpha = queryGateway();
-    polygon = queryGateway();
     marketstack = queryGateway();
     massive = queryGateway();
     dataBursatil = queryGateway();
@@ -78,8 +75,6 @@ describe('MarketModule integration', () => {
       .useValue(finnhub)
       .overrideProvider(AlphaVantageGatewayImpl)
       .useValue(alpha)
-      .overrideProvider(PolygonGatewayImpl)
-      .useValue(polygon)
       .overrideProvider(MarketstackGatewayImpl)
       .useValue(marketstack)
       .overrideProvider(MassiveGatewayImpl)
@@ -146,7 +141,6 @@ describe('MarketModule provider factories', () => {
   const apiKeys = {
     FINNHUB_API_KEY: 'finnhub-test-key',
     ALPHA_VANTAGE_API_KEY: 'alpha-test-key',
-    POLYGON_API_KEY: 'polygon-test-key',
     MARKETSTACK_API_KEY: 'marketstack-test-key',
     MASSIVE_API_KEY: 'massive-test-key',
     DATABURSATIL_API_KEY: 'data-bursatil-test-key',
@@ -187,9 +181,6 @@ describe('MarketModule provider factories', () => {
     );
     expect(moduleRef.get(AlphaVantageGatewayImpl)).toBeInstanceOf(
       AlphaVantageGatewayImpl,
-    );
-    expect(moduleRef.get(PolygonGatewayImpl)).toBeInstanceOf(
-      PolygonGatewayImpl,
     );
     expect(moduleRef.get(MarketstackGatewayImpl)).toBeInstanceOf(
       MarketstackGatewayImpl,

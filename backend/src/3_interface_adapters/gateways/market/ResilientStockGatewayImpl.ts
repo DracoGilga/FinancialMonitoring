@@ -12,16 +12,8 @@ export class ResilientStockGatewayImpl implements IStockMarketQueryGateway {
     private readonly marketstack: IStockMarketQueryGateway,
     private readonly massive: IStockMarketQueryGateway,
     private readonly dataBursatil: IStockMarketQueryGateway,
-    private readonly polygon: IStockMarketQueryGateway,
   ) {
-    this.fallbacks = [
-      yahoo,
-      finnhub,
-      polygon,
-      alphaVantage,
-      massive,
-      marketstack,
-    ];
+    this.fallbacks = [yahoo, finnhub, alphaVantage, massive, marketstack];
   }
 
   public async getQuote(symbol: string): Promise<StockQuote> {

@@ -7,6 +7,8 @@ import { StockQuote } from '../src/1_entities/market/StockQuote';
 import { GetStockQuoteInteractor } from '../src/2_use_cases/market/get_stock_quote/GetStockQuoteInteractor';
 import { GetStockQuoteRequest } from '../src/2_use_cases/market/get_stock_quote/GetStockQuoteRequest';
 import { GetStockQuoteResponse } from '../src/2_use_cases/market/get_stock_quote/GetStockQuoteResponse';
+import { GetBatchMarketDataRequest } from '../src/2_use_cases/market/get_batch_market_data/GetBatchMarketDataRequest';
+import { IGetBatchMarketDataInputPort } from '../src/2_use_cases/market/get_batch_market_data/IGetBatchMarketDataInputPort';
 import { IMarketCommandGateway } from '../src/2_use_cases/market/shared_ports/IMarketCommandGateway';
 import { IStockMarketQueryGateway } from '../src/2_use_cases/market/shared_ports/IStockMarketQueryGateway';
 import { MarketController } from '../src/3_interface_adapters/controllers/market/MarketController';
@@ -19,7 +21,19 @@ const mock = <T extends (...args: never[]) => unknown>(implementation?: T) =>
 const marketTime = new Date('2026-01-02T15:30:00.000Z');
 const fetchedAt = new Date('2026-01-02T15:31:00.000Z');
 const quote = () =>
-  new StockQuote('AAPL', 'Apple Inc.', 110, 100, 98, marketTime, fetchedAt);
+  new StockQuote(
+    'AAPL',
+    'Apple Inc.',
+    110,
+    100,
+    98,
+    marketTime,
+    fetchedAt,
+    115,
+    95,
+    1_000_000,
+    '1d',
+  );
 
 const gatewayMock = (): jest.Mocked<IStockMarketQueryGateway> => ({
   getQuote: mock<IStockMarketQueryGateway['getQuote']>(),
@@ -27,6 +41,10 @@ const gatewayMock = (): jest.Mocked<IStockMarketQueryGateway> => ({
 
 const commandMock = (): jest.Mocked<IMarketCommandGateway> => ({
   saveQuote: mock<IMarketCommandGateway['saveQuote']>(),
+});
+
+const batchUseCaseMock = (): jest.Mocked<IGetBatchMarketDataInputPort> => ({
+  execute: mock<IGetBatchMarketDataInputPort['execute']>(),
 });
 
 describe('market entities and models', () => {
@@ -48,6 +66,10 @@ describe('market entities and models', () => {
       0,
       marketTime,
       fetchedAt,
+      0,
+      -1,
+      0,
+      '1d',
     );
 
     expect(stock.getDailyVariationPercentage()).toBe(0);
@@ -98,6 +120,10 @@ describe('GetStockQuoteInteractor and presenter', () => {
         symbol: 'AAPL',
         companyName: 'Apple Inc.',
         currentPrice: 110,
+        high: 115,
+        low: 95,
+        volume: 1_000_000,
+        interval: '1d',
         dailyVariation: 10,
         dailyVariationPercentage: 0.1,
         marketTimestamp: marketTime,
@@ -142,9 +168,37 @@ describe('MarketController and GetStockDto', () => {
     symbol: 'AAPL',
     companyName: 'Apple Inc.',
     currentPrice: 110,
+    high: 115,
+    low: 95,
+    volume: 1_000_000,
+    interval: '1d',
     dailyVariation: 10,
     dailyVariationPercentage: 0.1,
     marketTimestamp: marketTime,
+  });
+
+  it('passes dynamic batch symbols and falls back to top companies', async () => {
+    const batchUseCase = batchUseCaseMock();
+    batchUseCase.execute.mockResolvedValue({ status: 'success', data: [] });
+    const quoteUseCase = {
+      execute:
+        mock<
+          (request: GetStockQuoteRequest) => Promise<GetStockQuoteResponse>
+        >(),
+    };
+    const controller = new MarketController(quoteUseCase, batchUseCase);
+
+    await controller.getBatchMarketData('aapl, amzn,AAPL');
+    expect(batchUseCase.execute).toHaveBeenNthCalledWith(
+      1,
+      new GetBatchMarketDataRequest(['AAPL', 'AMZN']),
+    );
+
+    await controller.getBatchMarketData();
+    expect(batchUseCase.execute).toHaveBeenNthCalledWith(
+      2,
+      new GetBatchMarketDataRequest(),
+    );
   });
 
   it('normalizes the symbol and returns the use-case response', async () => {
@@ -154,7 +208,7 @@ describe('MarketController and GetStockDto', () => {
           (request: GetStockQuoteRequest) => Promise<GetStockQuoteResponse>
         >().mockResolvedValue(success),
     };
-    const controller = new MarketController(useCase);
+    const controller = new MarketController(useCase, batchUseCaseMock());
 
     await expect(controller.getStockQuote({ symbol: 'aapl' })).resolves.toBe(
       success,
@@ -174,7 +228,7 @@ describe('MarketController and GetStockDto', () => {
           (request: GetStockQuoteRequest) => Promise<GetStockQuoteResponse>
         >().mockResolvedValue(result),
     };
-    const controller = new MarketController(useCase);
+    const controller = new MarketController(useCase, batchUseCaseMock());
 
     try {
       await controller.getStockQuote({ symbol: 'FAIL' });

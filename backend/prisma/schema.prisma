@@ -69,10 +69,15 @@ model StockHistory {
   currentPrice    Float    @map("current_price")
   openPrice       Float    @map("open_price")
   closePrice      Float    @map("close_price")
+  high            Float    @default(0) @map("high")
+  low             Float    @default(0) @map("low")
+  volume          Float    @default(0) @map("volume")
+  interval        String   @default("1d") @map("interval")
   marketTimestamp DateTime @map("market_timestamp")
   createdAt       DateTime @default(now()) @map("created_at")
 
   monitoredStock  MonitoredStock @relation(fields: [symbol], references: [symbol], onDelete: Cascade)
 
+  @@unique([symbol, marketTimestamp, interval])
   @@map("stock_history")
 }

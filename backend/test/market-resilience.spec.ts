@@ -17,6 +17,10 @@ const stock = new StockQuote(
   98,
   new Date('2026-01-02T15:30:00.000Z'),
   new Date('2026-01-02T15:31:00.000Z'),
+  115,
+  95,
+  1_000_000,
+  '1d',
 );
 
 const gateway = (): jest.Mocked<IStockMarketQueryGateway> => ({
@@ -134,6 +138,10 @@ describe('MarketCommandGatewayImpl', () => {
         currentPrice: 110,
         openPrice: 100,
         closePrice: 98,
+        high: 115,
+        low: 95,
+        volume: 1_000_000,
+        interval: '1d',
         marketTimestamp: stock.marketTimestamp,
         monitoredStock: {
           connectOrCreate: {

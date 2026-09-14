@@ -4,7 +4,10 @@ import { StockQuote } from '../../../1_entities/market/StockQuote';
 
 interface AlphaVantageQuote {
   '02. open': string;
+  '03. high'?: string;
+  '04. low'?: string;
   '05. price': string;
+  '06. volume'?: string;
   '08. previous close': string;
 }
 
@@ -40,6 +43,10 @@ export class AlphaVantageGatewayImpl implements IStockMarketQueryGateway {
       parseFloat(quote['08. previous close']),
       new Date(),
       new Date(),
+      parseFloat(quote['03. high'] ?? quote['05. price']),
+      parseFloat(quote['04. low'] ?? quote['05. price']),
+      parseFloat(quote['06. volume'] ?? '0'),
+      '1d',
     );
   }
 }

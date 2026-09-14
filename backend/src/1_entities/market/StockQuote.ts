@@ -8,6 +8,10 @@ export class StockQuote {
     public readonly closePrice: number,
     public readonly marketTimestamp: Date,
     public readonly fetchedAt: Date,
+    public readonly high: number = currentPrice,
+    public readonly low: number = currentPrice,
+    public readonly volume: number = 0,
+    public readonly interval: '1d' | '5m' = '1d',
   ) {}
 
   public getDailyVariation(): number {

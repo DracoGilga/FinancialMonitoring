@@ -33,6 +33,10 @@ const quote = new StockQuote(
   98,
   new Date('2026-01-02T15:30:00.000Z'),
   new Date('2026-01-02T15:31:00.000Z'),
+  115,
+  95,
+  1_000_000,
+  '1d',
 );
 
 const queryGateway = (): jest.Mocked<IStockMarketQueryGateway> => ({
@@ -103,6 +107,10 @@ describe('MarketModule integration', () => {
           symbol: 'AAPL',
           companyName: 'Apple Inc.',
           currentPrice: 110,
+          high: 115,
+          low: 95,
+          volume: 1_000_000,
+          interval: '1d',
           dailyVariation: 10,
           dailyVariationPercentage: 0.1,
           marketTimestamp: quote.marketTimestamp,

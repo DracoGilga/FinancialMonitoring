@@ -15,15 +15,29 @@ import { ResilientStockGatewayImpl } from '../../3_interface_adapters/gateways/m
 import { IStockMarketQueryGateway } from '../../2_use_cases/market/shared_ports/IStockMarketQueryGateway';
 import { IMarketCommandGateway } from '../../2_use_cases/market/shared_ports/IMarketCommandGateway';
 import { IGetStockQuoteOutputPort } from '../../2_use_cases/market/get_stock_quote/IGetStockQuoteOutputPort';
+import { GetBatchMarketDataInteractor } from '../../2_use_cases/market/get_batch_market_data/GetBatchMarketDataInteractor';
+import { BatchMarketDataPresenter } from '../../3_interface_adapters/presenters/market/BatchMarketDataPresenter';
+import { RedisCacheGatewayImpl } from '../../3_interface_adapters/gateways/market/RedisCacheGatewayImpl';
 
 @Module({
   controllers: [MarketController],
   providers: [
     PrismaService,
     StockQuotePresenter,
+    BatchMarketDataPresenter,
+    {
+      provide: RedisCacheGatewayImpl,
+      useFactory: () =>
+        new RedisCacheGatewayImpl(
+          process.env.REDIS_HOST || 'redis',
+          parseInt(process.env.REDIS_PORT || '6379', 10),
+          process.env.REDIS_PASSWORD,
+        ),
+    },
+    MarketCommandGatewayImpl,
     {
       provide: 'IMarketCommandGateway',
-      useClass: MarketCommandGatewayImpl,
+      useExisting: MarketCommandGatewayImpl,
     },
     {
       provide: YahooFinanceGatewayImpl,
@@ -84,6 +98,22 @@ import { IGetStockQuoteOutputPort } from '../../2_use_cases/market/get_stock_quo
       ],
     },
 
+    {
+      provide: 'IGetBatchMarketDataInputPort',
+      useFactory: (
+        yahoo: YahooFinanceGatewayImpl,
+        repository: MarketCommandGatewayImpl,
+        cache: RedisCacheGatewayImpl,
+        presenter: BatchMarketDataPresenter,
+      ) =>
+        new GetBatchMarketDataInteractor(yahoo, repository, cache, presenter),
+      inject: [
+        YahooFinanceGatewayImpl,
+        MarketCommandGatewayImpl,
+        RedisCacheGatewayImpl,
+        BatchMarketDataPresenter,
+      ],
+    },
     {
       provide: 'IGetStockQuoteInputPort',
       useFactory: (

@@ -5,6 +5,9 @@ import { StockQuote } from '../../../1_entities/market/StockQuote';
 interface DataBursatilPrice {
   precio_actual: string;
   precio_apertura: string;
+  precio_maximo?: string;
+  precio_minimo?: string;
+  volumen?: string;
   precio_cierre_anterior: string;
 }
 
@@ -41,6 +44,10 @@ export class DataBursatilGatewayImpl implements IStockMarketQueryGateway {
       parseFloat(priceData.precio_cierre_anterior),
       new Date(),
       new Date(),
+      parseFloat(priceData.precio_maximo ?? priceData.precio_actual),
+      parseFloat(priceData.precio_minimo ?? priceData.precio_actual),
+      parseFloat(priceData.volumen ?? '0'),
+      '1d',
     );
   }
 }

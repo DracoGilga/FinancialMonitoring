@@ -6,6 +6,9 @@ interface FinnhubQuoteResponse {
   c: number;
   d: number | null;
   o: number;
+  h?: number;
+  l?: number;
+  v?: number;
   pc: number;
   t: number;
 }
@@ -40,6 +43,10 @@ export class FinnhubGatewayImpl implements IStockMarketQueryGateway {
       data.pc,
       new Date(data.t * 1000),
       new Date(),
+      data.h ?? data.c,
+      data.l ?? data.c,
+      data.v ?? 0,
+      '1d',
     );
   }
 }

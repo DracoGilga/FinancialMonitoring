@@ -5,6 +5,9 @@ import { StockQuote } from '../../../1_entities/market/StockQuote';
 interface MarketstackQuote {
   close: number;
   open: number;
+  high?: number;
+  low?: number;
+  volume?: number;
   date: string;
 }
 
@@ -42,6 +45,10 @@ export class MarketstackGatewayImpl implements IStockMarketQueryGateway {
       data.close,
       new Date(data.date),
       new Date(),
+      data.high ?? data.close,
+      data.low ?? data.close,
+      data.volume ?? 0,
+      '1d',
     );
   }
 }

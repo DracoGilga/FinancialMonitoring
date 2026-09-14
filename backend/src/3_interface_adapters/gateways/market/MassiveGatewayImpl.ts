@@ -5,6 +5,9 @@ import { StockQuote } from '../../../1_entities/market/StockQuote';
 interface MassiveQuoteResponse {
   price?: number;
   open?: number;
+  high?: number;
+  low?: number;
+  volume?: number;
   previousClose?: number;
 }
 
@@ -39,6 +42,10 @@ export class MassiveGatewayImpl implements IStockMarketQueryGateway {
       data.previousClose || data.price,
       new Date(),
       new Date(),
+      data.high ?? data.price,
+      data.low ?? data.price,
+      data.volume ?? 0,
+      '1d',
     );
   }
 }

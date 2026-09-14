@@ -7,6 +7,10 @@ export interface StockQuoteSuccessViewModel {
     symbol: string;
     companyName: string;
     currentPrice: number;
+    high: number;
+    low: number;
+    volume: number;
+    interval: '1d';
     dailyVariation: number;
     dailyVariationPercentage: number;
     marketTimestamp: Date;

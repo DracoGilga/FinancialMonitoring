@@ -91,11 +91,9 @@
     "coverageDirectory": "coverage",
     "testEnvironment": "node"
   },
-  "pnpm": {
-    "overrides": {
-      "deepmerge-ts": ">=8.0.0",
-      "multer": ">=2.3.0",
-      "uuid": ">=11.1.1"
-    }
+  "overrides": {
+    "deepmerge-ts": ">=8.0.0",
+    "multer": ">=2.3.0",
+    "uuid": ">=11.1.1"
   }
 }

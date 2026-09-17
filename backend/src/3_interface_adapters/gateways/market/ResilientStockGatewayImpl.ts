@@ -1,6 +1,7 @@
 // src/3_interface_adapters/gateways/market/ResilientStockGatewayImpl.ts
 import { IStockMarketQueryGateway } from '../../../2_use_cases/market/shared_ports/IStockMarketQueryGateway';
 import { StockQuote } from '../../../1_entities/market/StockQuote';
+import { SymbolSearchResult } from '../../../1_entities/market/SymbolSearchResult';
 
 export class ResilientStockGatewayImpl implements IStockMarketQueryGateway {
   private fallbacks: IStockMarketQueryGateway[];
@@ -14,6 +15,10 @@ export class ResilientStockGatewayImpl implements IStockMarketQueryGateway {
     private readonly dataBursatil: IStockMarketQueryGateway,
   ) {
     this.fallbacks = [yahoo, finnhub, alphaVantage, massive, marketstack];
+  }
+
+  public searchSymbols(query: string): Promise<SymbolSearchResult[]> {
+    return this.yahoo.searchSymbols(query);
   }
 
   public async getQuote(symbol: string): Promise<StockQuote> {

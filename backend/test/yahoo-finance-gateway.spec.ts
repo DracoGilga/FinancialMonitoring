@@ -11,8 +11,21 @@ type YahooQuote = {
   regularMarketTime?: Date;
 };
 
+type YahooSearchResponse = {
+  quotes: Array<{
+    symbol?: string;
+    longname?: string;
+    shortname?: string;
+    exchDisp?: string;
+    exchange?: string;
+    typeDisp?: string;
+    quoteType?: string;
+  }>;
+};
+
 type YahooClient = {
   quote(symbol: string): Promise<YahooQuote>;
+  search?(query: string): Promise<YahooSearchResponse>;
 };
 
 const mock = <T extends (...args: never[]) => unknown>(implementation?: T) =>
@@ -23,6 +36,46 @@ const client = (result: YahooQuote): jest.Mocked<YahooClient> => ({
 });
 
 describe('YahooFinanceGatewayImpl', () => {
+  it('maps normalized search symbols and metadata', async () => {
+    const yahoo: jest.Mocked<YahooClient> = {
+      quote: mock<YahooClient['quote']>(),
+      search: mock<NonNullable<YahooClient['search']>>().mockResolvedValue({
+        quotes: [
+          {
+            symbol: 'aapl',
+            longname: 'Apple Inc.',
+            exchDisp: 'NASDAQ',
+            typeDisp: 'Equity',
+          },
+          {
+            symbol: 'AAPL240119C00150000',
+            shortname: 'Apple Call',
+            exchange: 'OPR',
+            quoteType: 'OPTION',
+          },
+          { longname: 'Unsupported result without a symbol' },
+        ],
+      }),
+    };
+    const gateway = new YahooFinanceGatewayImpl(yahoo);
+
+    await expect(gateway.searchSymbols('Apple')).resolves.toEqual([
+      {
+        symbol: 'AAPL',
+        companyName: 'Apple Inc.',
+        exchange: 'NASDAQ',
+        instrumentType: 'Equity',
+      },
+      {
+        symbol: 'AAPL240119C00150000',
+        companyName: 'Apple Call',
+        exchange: 'OPR',
+        instrumentType: 'OPTION',
+      },
+    ]);
+    expect(yahoo.search).toHaveBeenCalledWith('Apple');
+  });
+
   it('maps the complete Yahoo quote', async () => {
     const marketTime = new Date('2026-01-02T15:30:00.000Z');
     const yahoo = client({

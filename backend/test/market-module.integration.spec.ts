@@ -41,6 +41,7 @@ const quote = new StockQuote(
 
 const queryGateway = (): jest.Mocked<IStockMarketQueryGateway> => ({
   getQuote: mock<IStockMarketQueryGateway['getQuote']>(),
+  searchSymbols: mock<IStockMarketQueryGateway['searchSymbols']>(),
 });
 
 describe('MarketModule integration', () => {

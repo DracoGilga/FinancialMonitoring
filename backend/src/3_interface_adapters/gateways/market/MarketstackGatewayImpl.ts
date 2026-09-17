@@ -1,6 +1,7 @@
 // src/3_interface_adapters/gateways/market/MarketstackGatewayImpl.ts
 import { IStockMarketQueryGateway } from '../../../2_use_cases/market/shared_ports/IStockMarketQueryGateway';
 import { StockQuote } from '../../../1_entities/market/StockQuote';
+import { SymbolSearchResult } from '../../../1_entities/market/SymbolSearchResult';
 
 interface MarketstackQuote {
   close: number;
@@ -20,6 +21,10 @@ export class MarketstackGatewayImpl implements IStockMarketQueryGateway {
     if (!this.apiKey) {
       throw new Error('MARKETSTACK_API_KEY is required');
     }
+  }
+
+  public searchSymbols(_query: string): Promise<SymbolSearchResult[]> {
+    return Promise.resolve([]);
   }
 
   public async getQuote(symbol: string): Promise<StockQuote> {

@@ -25,6 +25,7 @@ const stock = new StockQuote(
 
 const gateway = (): jest.Mocked<IStockMarketQueryGateway> => ({
   getQuote: mock<IStockMarketQueryGateway['getQuote']>(),
+  searchSymbols: mock<IStockMarketQueryGateway['searchSymbols']>(),
 });
 
 type GatewaySet = {

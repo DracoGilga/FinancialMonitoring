@@ -1,6 +1,7 @@
 // src/3_interface_adapters/gateways/market/AlphaVantageGatewayImpl.ts
 import { IStockMarketQueryGateway } from '../../../2_use_cases/market/shared_ports/IStockMarketQueryGateway';
 import { StockQuote } from '../../../1_entities/market/StockQuote';
+import { SymbolSearchResult } from '../../../1_entities/market/SymbolSearchResult';
 
 interface AlphaVantageQuote {
   '02. open': string;
@@ -18,6 +19,10 @@ interface AlphaVantageResponse {
 export class AlphaVantageGatewayImpl implements IStockMarketQueryGateway {
   constructor(private readonly apiKey: string) {
     if (!this.apiKey) throw new Error('ALPHA_VANTAGE_API_KEY is required');
+  }
+
+  public searchSymbols(_query: string): Promise<SymbolSearchResult[]> {
+    return Promise.resolve([]);
   }
 
   public async getQuote(symbol: string): Promise<StockQuote> {

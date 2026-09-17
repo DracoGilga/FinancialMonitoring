@@ -2,6 +2,7 @@
 import YahooFinance from 'yahoo-finance2';
 import { IStockMarketQueryGateway } from '../../../2_use_cases/market/shared_ports/IStockMarketQueryGateway';
 import { StockQuote } from '../../../1_entities/market/StockQuote';
+import { SymbolSearchResult } from '../../../1_entities/market/SymbolSearchResult';
 import { IBatchMarketDataGateway } from '../../../2_use_cases/market/get_batch_market_data/IBatchMarketDataGateway';
 
 interface YahooFinanceQuoteResponse {
@@ -30,8 +31,23 @@ interface YahooChartResponse {
   quotes: YahooChartPoint[];
 }
 
+interface YahooSearchQuote {
+  symbol?: string;
+  longname?: string;
+  shortname?: string;
+  exchange?: string;
+  exchDisp?: string;
+  quoteType?: string;
+  typeDisp?: string;
+}
+
+interface YahooSearchResponse {
+  quotes?: unknown[];
+}
+
 interface YahooFinanceClient {
   quote(symbol: string): Promise<YahooFinanceQuoteResponse>;
+  search?(query: string): Promise<YahooSearchResponse>;
   chart?(
     symbol: string,
     options: { period1: Date; period2?: Date; interval: '1d' | '5m' },
@@ -70,6 +86,33 @@ export class YahooFinanceGatewayImpl
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : undefined;
       throw new Error(`Yahoo Finance API Error: ${message}`);
+    }
+  }
+
+  public async searchSymbols(query: string): Promise<SymbolSearchResult[]> {
+    try {
+      if (!this.yahooFinance.search) {
+        throw new Error('Yahoo Finance search API is unavailable');
+      }
+
+      const response = await this.yahooFinance.search(query.trim());
+      return (response.quotes ?? [])
+        .map((quote) => quote as YahooSearchQuote)
+        .filter((quote): quote is YahooSearchQuote & { symbol: string } =>
+          Boolean(quote.symbol),
+        )
+        .map(
+          (quote) =>
+            new SymbolSearchResult(
+              quote.symbol.toUpperCase(),
+              quote.longname || quote.shortname || quote.symbol.toUpperCase(),
+              quote.exchDisp || quote.exchange || 'Unknown',
+              quote.typeDisp || quote.quoteType || 'Unknown',
+            ),
+        );
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      throw new Error(`Yahoo Finance search API Error: ${message}`);
     }
   }
 

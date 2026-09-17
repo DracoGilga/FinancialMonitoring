@@ -22,6 +22,7 @@ import { GetStockQuoteRequest } from '../../../2_use_cases/market/get_stock_quot
 import { GetStockDto } from './dto/GetStockDto';
 import { IGetBatchMarketDataInputPort } from '../../../2_use_cases/market/get_batch_market_data/IGetBatchMarketDataInputPort';
 import { GetBatchMarketDataRequest } from '../../../2_use_cases/market/get_batch_market_data/GetBatchMarketDataRequest';
+import { ISearchSymbolsInputPort } from '../../../2_use_cases/market/search_symbols/ISearchSymbolsInputPort';
 
 @ApiTags('Market')
 @Controller('market')
@@ -33,6 +34,8 @@ export class MarketController {
     private readonly getStockQuoteUseCase: IGetStockQuoteInputPort,
     @Inject('IGetBatchMarketDataInputPort')
     private readonly getBatchMarketDataUseCase: IGetBatchMarketDataInputPort,
+    @Inject('ISearchSymbolsInputPort')
+    private readonly searchSymbolsUseCase: ISearchSymbolsInputPort,
   ) {}
 
   @Get('batch')
@@ -56,6 +59,31 @@ export class MarketController {
       throw new HttpException(result.message, HttpStatus.BAD_GATEWAY);
     }
     return result;
+  }
+
+  @Get('search')
+  @ApiOperation({
+    summary: 'Search supported market symbols by company name or ticker',
+  })
+  @ApiQuery({
+    name: 'query',
+    required: true,
+    type: String,
+    example: 'Apple',
+    description: 'Company name or ticker symbol to search for.',
+  })
+  @ApiResponse({ status: 200, description: 'Normalized symbols and metadata' })
+  @ApiResponse({ status: 400, description: 'Search query is required' })
+  @ApiResponse({ status: 401, description: 'Missing or invalid access token' })
+  async searchSymbols(@Query('query') query?: string) {
+    if (!query?.trim()) {
+      throw new HttpException(
+        'Search query is required',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    return this.searchSymbolsUseCase.execute(query);
   }
 
   @Get('quote/:symbol')

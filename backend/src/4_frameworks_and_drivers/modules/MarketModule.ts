@@ -18,6 +18,7 @@ import { IGetStockQuoteOutputPort } from '../../2_use_cases/market/get_stock_quo
 import { GetBatchMarketDataInteractor } from '../../2_use_cases/market/get_batch_market_data/GetBatchMarketDataInteractor';
 import { BatchMarketDataPresenter } from '../../3_interface_adapters/presenters/market/BatchMarketDataPresenter';
 import { RedisCacheGatewayImpl } from '../../3_interface_adapters/gateways/market/RedisCacheGatewayImpl';
+import { SearchSymbolsUseCase } from '../../2_use_cases/market/search_symbols/SearchSymbolsUseCase';
 
 @Module({
   controllers: [MarketController],
@@ -98,6 +99,12 @@ import { RedisCacheGatewayImpl } from '../../3_interface_adapters/gateways/marke
       ],
     },
 
+    {
+      provide: 'ISearchSymbolsInputPort',
+      useFactory: (queryGateway: IStockMarketQueryGateway) =>
+        new SearchSymbolsUseCase(queryGateway),
+      inject: ['IStockMarketQueryGateway'],
+    },
     {
       provide: 'IGetBatchMarketDataInputPort',
       useFactory: (

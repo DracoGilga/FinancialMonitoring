@@ -9,6 +9,7 @@ import { GetStockQuoteRequest } from '../src/2_use_cases/market/get_stock_quote/
 import { GetStockQuoteResponse } from '../src/2_use_cases/market/get_stock_quote/GetStockQuoteResponse';
 import { GetBatchMarketDataRequest } from '../src/2_use_cases/market/get_batch_market_data/GetBatchMarketDataRequest';
 import { IGetBatchMarketDataInputPort } from '../src/2_use_cases/market/get_batch_market_data/IGetBatchMarketDataInputPort';
+import { ISearchSymbolsInputPort } from '../src/2_use_cases/market/search_symbols/ISearchSymbolsInputPort';
 import { IMarketCommandGateway } from '../src/2_use_cases/market/shared_ports/IMarketCommandGateway';
 import { IStockMarketQueryGateway } from '../src/2_use_cases/market/shared_ports/IStockMarketQueryGateway';
 import { MarketController } from '../src/3_interface_adapters/controllers/market/MarketController';
@@ -37,6 +38,7 @@ const quote = () =>
 
 const gatewayMock = (): jest.Mocked<IStockMarketQueryGateway> => ({
   getQuote: mock<IStockMarketQueryGateway['getQuote']>(),
+  searchSymbols: mock<IStockMarketQueryGateway['searchSymbols']>(),
 });
 
 const commandMock = (): jest.Mocked<IMarketCommandGateway> => ({
@@ -45,6 +47,10 @@ const commandMock = (): jest.Mocked<IMarketCommandGateway> => ({
 
 const batchUseCaseMock = (): jest.Mocked<IGetBatchMarketDataInputPort> => ({
   execute: mock<IGetBatchMarketDataInputPort['execute']>(),
+});
+
+const searchUseCaseMock = (): jest.Mocked<ISearchSymbolsInputPort> => ({
+  execute: mock<ISearchSymbolsInputPort['execute']>(),
 });
 
 describe('market entities and models', () => {
@@ -186,7 +192,11 @@ describe('MarketController and GetStockDto', () => {
           (request: GetStockQuoteRequest) => Promise<GetStockQuoteResponse>
         >(),
     };
-    const controller = new MarketController(quoteUseCase, batchUseCase);
+    const controller = new MarketController(
+      quoteUseCase,
+      batchUseCase,
+      searchUseCaseMock(),
+    );
 
     await controller.getBatchMarketData('aapl, amzn,AAPL');
     expect(batchUseCase.execute).toHaveBeenNthCalledWith(
@@ -208,7 +218,11 @@ describe('MarketController and GetStockDto', () => {
           (request: GetStockQuoteRequest) => Promise<GetStockQuoteResponse>
         >().mockResolvedValue(success),
     };
-    const controller = new MarketController(useCase, batchUseCaseMock());
+    const controller = new MarketController(
+      useCase,
+      batchUseCaseMock(),
+      searchUseCaseMock(),
+    );
 
     await expect(controller.getStockQuote({ symbol: 'aapl' })).resolves.toBe(
       success,
@@ -228,7 +242,11 @@ describe('MarketController and GetStockDto', () => {
           (request: GetStockQuoteRequest) => Promise<GetStockQuoteResponse>
         >().mockResolvedValue(result),
     };
-    const controller = new MarketController(useCase, batchUseCaseMock());
+    const controller = new MarketController(
+      useCase,
+      batchUseCaseMock(),
+      searchUseCaseMock(),
+    );
 
     try {
       await controller.getStockQuote({ symbol: 'FAIL' });

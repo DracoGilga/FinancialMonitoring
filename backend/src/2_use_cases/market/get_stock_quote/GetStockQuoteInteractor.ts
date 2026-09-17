@@ -5,6 +5,7 @@ import { GetStockQuoteResponse } from './GetStockQuoteResponse';
 import { IGetStockQuoteOutputPort } from './IGetStockQuoteOutputPort';
 import { IStockMarketQueryGateway } from '../shared_ports/IStockMarketQueryGateway';
 import { IMarketCommandGateway } from '../shared_ports/IMarketCommandGateway';
+import { MarketDomainException } from '../../../1_entities/market/MarketExceptions';
 
 export class GetStockQuoteInteractor implements IGetStockQuoteInputPort {
   constructor(
@@ -22,6 +23,9 @@ export class GetStockQuoteInteractor implements IGetStockQuoteInputPort {
 
       return this.outputPort.presentSuccess(stockQuote);
     } catch (error: unknown) {
+      if (error instanceof MarketDomainException) {
+        throw error;
+      }
       const err = error instanceof Error ? error : new Error('Unknown error');
       return this.outputPort.presentError(err);
     }

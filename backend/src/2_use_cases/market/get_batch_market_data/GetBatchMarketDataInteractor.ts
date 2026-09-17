@@ -7,6 +7,7 @@ import {
   IHistoricalMarketDataRepository,
   IIntradayMarketDataCache,
 } from './IBatchMarketDataGateway';
+import { MarketDomainException } from '../../../1_entities/market/MarketExceptions';
 
 export class GetBatchMarketDataInteractor implements IGetBatchMarketDataInputPort {
   constructor(
@@ -45,6 +46,9 @@ export class GetBatchMarketDataInteractor implements IGetBatchMarketDataInputPor
 
       return this.outputPort.presentSuccess(data);
     } catch (error: unknown) {
+      if (error instanceof MarketDomainException) {
+        throw error;
+      }
       return this.outputPort.presentError(
         error instanceof Error ? error : new Error('Unknown error'),
       );

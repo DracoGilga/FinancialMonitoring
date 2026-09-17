@@ -1,6 +1,11 @@
 // test/yahoo-finance-gateway.spec.ts
 import { describe, expect, it, jest } from '@jest/globals';
 import { YahooFinanceGatewayImpl } from '../src/3_interface_adapters/gateways/market/YahooFinanceGatewayImpl';
+import {
+  MarketServiceUnavailableException,
+  ProviderRateLimitException,
+  SymbolNotFoundException,
+} from '../src/1_entities/market/MarketExceptions';
 
 type YahooQuote = {
   longName?: string;
@@ -121,10 +126,10 @@ describe('YahooFinanceGatewayImpl', () => {
     });
   });
 
-  it('wraps missing quotes, Error failures and non-Error failures', async () => {
+  it('classifies missing quotes, throttling and provider failures', async () => {
     const missing = new YahooFinanceGatewayImpl(client({}));
-    await expect(missing.getQuote('NONE')).rejects.toThrow(
-      'Yahoo Finance API Error: Symbol NONE not found or market closed on Yahoo Finance',
+    await expect(missing.getQuote('NONE')).rejects.toBeInstanceOf(
+      SymbolNotFoundException,
     );
 
     const failedClient: jest.Mocked<YahooClient> = {
@@ -134,11 +139,18 @@ describe('YahooFinanceGatewayImpl', () => {
     };
     await expect(
       new YahooFinanceGatewayImpl(failedClient).getQuote('AAPL'),
-    ).rejects.toThrow('Yahoo Finance API Error: service unavailable');
+    ).rejects.toBeInstanceOf(MarketServiceUnavailableException);
+
+    failedClient.quote.mockRejectedValue(
+      new Error('HTTP 429 Too Many Requests'),
+    );
+    await expect(
+      new YahooFinanceGatewayImpl(failedClient).getQuote('AAPL'),
+    ).rejects.toBeInstanceOf(ProviderRateLimitException);
 
     failedClient.quote.mockRejectedValue('failure');
     await expect(
       new YahooFinanceGatewayImpl(failedClient).getQuote('AAPL'),
-    ).rejects.toThrow('Yahoo Finance API Error: undefined');
+    ).rejects.toBeInstanceOf(MarketServiceUnavailableException);
   });
 });

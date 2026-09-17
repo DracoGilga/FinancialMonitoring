@@ -1,6 +1,11 @@
 // test/market-resilience.spec.ts
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { StockQuote } from '../src/1_entities/market/StockQuote';
+import {
+  MarketServiceUnavailableException,
+  ProviderRateLimitException,
+  SymbolNotFoundException,
+} from '../src/1_entities/market/MarketExceptions';
 import { IStockMarketQueryGateway } from '../src/2_use_cases/market/shared_ports/IStockMarketQueryGateway';
 import { PrismaService } from '../src/3_interface_adapters/gateways/db/PrismaService';
 import { MarketCommandGatewayImpl } from '../src/3_interface_adapters/gateways/market/MarketCommandGatewayImpl';
@@ -98,7 +103,7 @@ describe('ResilientStockGatewayImpl', () => {
     expect(gateways.dataBursatil.getQuote).not.toHaveBeenCalled();
   });
 
-  it('tries every fallback and throws the fatal error when all fail', async () => {
+  it('throws service unavailable when all providers fail unexpectedly', async () => {
     const { resilient, gateways } = createResilientGateway();
     for (const provider of [
       gateways.yahoo,
@@ -110,10 +115,46 @@ describe('ResilientStockGatewayImpl', () => {
       provider.getQuote.mockRejectedValue(new Error('failed'));
     }
 
-    await expect(resilient.getQuote('FAIL')).rejects.toThrow(
-      '[Gateway Fatal] All market APIs failed for symbol: FAIL',
+    await expect(resilient.getQuote('FAIL')).rejects.toBeInstanceOf(
+      MarketServiceUnavailableException,
     );
     expect(console.warn).toHaveBeenCalledTimes(5);
+  });
+
+  it('throws not found when every provider reports an unavailable symbol', async () => {
+    const { resilient, gateways } = createResilientGateway();
+    for (const provider of [
+      gateways.yahoo,
+      gateways.finnhub,
+      gateways.alpha,
+      gateways.massive,
+      gateways.marketstack,
+    ]) {
+      provider.getQuote.mockRejectedValue(new SymbolNotFoundException('NONE'));
+    }
+
+    await expect(resilient.getQuote('NONE')).rejects.toBeInstanceOf(
+      SymbolNotFoundException,
+    );
+  });
+
+  it('throws rate limit when a provider is throttled and no fallback succeeds', async () => {
+    const { resilient, gateways } = createResilientGateway();
+    gateways.yahoo.getQuote.mockRejectedValue(
+      new ProviderRateLimitException('Yahoo Finance'),
+    );
+    for (const provider of [
+      gateways.finnhub,
+      gateways.alpha,
+      gateways.massive,
+      gateways.marketstack,
+    ]) {
+      provider.getQuote.mockRejectedValue(new Error('unavailable'));
+    }
+
+    await expect(resilient.getQuote('AAPL')).rejects.toBeInstanceOf(
+      ProviderRateLimitException,
+    );
   });
 });
 

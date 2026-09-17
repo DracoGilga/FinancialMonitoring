@@ -5,6 +5,7 @@ import {
   Param,
   Query,
   UseGuards,
+  UseFilters,
   Inject,
   HttpException,
   HttpStatus,
@@ -23,10 +24,12 @@ import { GetStockDto } from './dto/GetStockDto';
 import { IGetBatchMarketDataInputPort } from '../../../2_use_cases/market/get_batch_market_data/IGetBatchMarketDataInputPort';
 import { GetBatchMarketDataRequest } from '../../../2_use_cases/market/get_batch_market_data/GetBatchMarketDataRequest';
 import { ISearchSymbolsInputPort } from '../../../2_use_cases/market/search_symbols/ISearchSymbolsInputPort';
+import { MarketExceptionFilter } from './filters/MarketExceptionFilter';
 
 @ApiTags('Market')
 @Controller('market')
 @UseGuards(JwtAuthGuard)
+@UseFilters(MarketExceptionFilter)
 @ApiBearerAuth()
 export class MarketController {
   constructor(
@@ -51,6 +54,9 @@ export class MarketController {
       'Comma-separated stock symbols. Defaults to the top companies.',
   })
   @ApiResponse({ status: 200, description: 'Batch market data retrieved' })
+  @ApiResponse({ status: 404, description: 'A requested symbol was not found' })
+  @ApiResponse({ status: 429, description: 'Provider rate limit exceeded' })
+  @ApiResponse({ status: 503, description: 'Market providers unavailable' })
   async getBatchMarketData(@Query('symbols') symbols?: string) {
     const result = await this.getBatchMarketDataUseCase.execute(
       new GetBatchMarketDataRequest(symbols),
@@ -75,6 +81,9 @@ export class MarketController {
   @ApiResponse({ status: 200, description: 'Normalized symbols and metadata' })
   @ApiResponse({ status: 400, description: 'Search query is required' })
   @ApiResponse({ status: 401, description: 'Missing or invalid access token' })
+  @ApiResponse({ status: 404, description: 'No matching symbol was found' })
+  @ApiResponse({ status: 429, description: 'Provider rate limit exceeded' })
+  @ApiResponse({ status: 503, description: 'Symbol search unavailable' })
   async searchSymbols(@Query('query') query?: string) {
     if (!query?.trim()) {
       throw new HttpException(
@@ -98,6 +107,8 @@ export class MarketController {
     status: 404,
     description: 'Stock symbol not found in providers',
   })
+  @ApiResponse({ status: 429, description: 'Provider rate limit exceeded' })
+  @ApiResponse({ status: 503, description: 'Market providers unavailable' })
   async getStockQuote(@Param() params: GetStockDto) {
     const request = new GetStockQuoteRequest(params.symbol.toUpperCase());
     const result = await this.getStockQuoteUseCase.execute(request);

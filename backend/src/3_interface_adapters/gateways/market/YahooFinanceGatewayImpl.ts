@@ -4,6 +4,12 @@ import { IStockMarketQueryGateway } from '../../../2_use_cases/market/shared_por
 import { StockQuote } from '../../../1_entities/market/StockQuote';
 import { SymbolSearchResult } from '../../../1_entities/market/SymbolSearchResult';
 import { IBatchMarketDataGateway } from '../../../2_use_cases/market/get_batch_market_data/IBatchMarketDataGateway';
+import {
+  MarketDomainException,
+  MarketServiceUnavailableException,
+  ProviderRateLimitException,
+  SymbolNotFoundException,
+} from '../../../1_entities/market/MarketExceptions';
 
 interface YahooFinanceQuoteResponse {
   longName?: string;
@@ -65,9 +71,7 @@ export class YahooFinanceGatewayImpl
     try {
       const quote = await this.yahooFinance.quote(symbol);
       if (!quote || !quote.regularMarketPrice) {
-        throw new Error(
-          `Symbol ${symbol} not found or market closed on Yahoo Finance`,
-        );
+        throw new SymbolNotFoundException(symbol);
       }
 
       return new StockQuote(
@@ -84,15 +88,20 @@ export class YahooFinanceGatewayImpl
         '1d',
       );
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : undefined;
-      throw new Error(`Yahoo Finance API Error: ${message}`);
+      throw this.toDomainException(
+        error,
+        'Yahoo Finance quote service',
+        symbol,
+      );
     }
   }
 
   public async searchSymbols(query: string): Promise<SymbolSearchResult[]> {
     try {
       if (!this.yahooFinance.search) {
-        throw new Error('Yahoo Finance search API is unavailable');
+        throw new MarketServiceUnavailableException(
+          'Yahoo Finance search API is unavailable',
+        );
       }
 
       const response = await this.yahooFinance.search(query.trim());
@@ -111,8 +120,7 @@ export class YahooFinanceGatewayImpl
             ),
         );
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      throw new Error(`Yahoo Finance search API Error: ${message}`);
+      throw this.toDomainException(error, 'Yahoo Finance search service');
     }
   }
 
@@ -128,6 +136,23 @@ export class YahooFinanceGatewayImpl
     const now = new Date();
     const start = new Date(now.getTime() - 24 * 60 * 60 * 1000);
     return this.getChart(symbol, start, now, '5m');
+  }
+
+  private toDomainException(
+    error: unknown,
+    provider: string,
+    symbol = 'UNKNOWN',
+  ): MarketDomainException {
+    if (error instanceof MarketDomainException) return error;
+
+    const message = error instanceof Error ? error.message : '';
+    if (/429|rate limit|too many requests|throttl/i.test(message)) {
+      return new ProviderRateLimitException(provider);
+    }
+    if (/not found|no data|invalid symbol|delisted/i.test(message)) {
+      return new SymbolNotFoundException(symbol);
+    }
+    return new MarketServiceUnavailableException(`${provider} is unavailable`);
   }
 
   private async getChart(

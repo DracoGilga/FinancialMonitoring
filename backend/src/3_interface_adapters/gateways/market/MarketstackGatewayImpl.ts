@@ -2,6 +2,7 @@
 import { IStockMarketQueryGateway } from '../../../2_use_cases/market/shared_ports/IStockMarketQueryGateway';
 import { StockQuote } from '../../../1_entities/market/StockQuote';
 import { SymbolSearchResult } from '../../../1_entities/market/SymbolSearchResult';
+import { MarketServiceUnavailableException } from '../../../1_entities/market/MarketExceptions';
 
 interface MarketstackQuote {
   close: number;
@@ -23,8 +24,12 @@ export class MarketstackGatewayImpl implements IStockMarketQueryGateway {
     }
   }
 
-  public searchSymbols(_query: string): Promise<SymbolSearchResult[]> {
-    return Promise.resolve([]);
+  public searchSymbols(query: string): Promise<SymbolSearchResult[]> {
+    return Promise.reject(
+      new MarketServiceUnavailableException(
+        `Symbol search is not implemented for Marketstack. Query: ${query}`,
+      ),
+    );
   }
 
   public async getQuote(symbol: string): Promise<StockQuote> {

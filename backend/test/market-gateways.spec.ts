@@ -1,5 +1,6 @@
 // test/market-gateways.spec.ts
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
+import { MarketServiceUnavailableException } from '../src/1_entities/market/MarketExceptions';
 import { AlphaVantageGatewayImpl } from '../src/3_interface_adapters/gateways/market/AlphaVantageGatewayImpl';
 import { DataBursatilGatewayImpl } from '../src/3_interface_adapters/gateways/market/DataBursatilGatewayImpl';
 import { FinnhubGatewayImpl } from '../src/3_interface_adapters/gateways/market/FinnhubGatewayImpl';
@@ -33,6 +34,21 @@ describe('HTTP market gateways', () => {
   ])('requires an API key', (createGateway, message) => {
     expect(createGateway).toThrow(message);
   });
+
+  it.each([
+    ['Finnhub', new FinnhubGatewayImpl('key')],
+    ['Alpha Vantage', new AlphaVantageGatewayImpl('key')],
+    ['DataBursatil', new DataBursatilGatewayImpl('key')],
+    ['Marketstack', new MarketstackGatewayImpl('key')],
+    ['Massive', new MassiveGatewayImpl('key')],
+  ])(
+    '%s rejects unsupported symbol searches with a controlled exception',
+    async (_provider, gateway) => {
+      await expect(gateway.searchSymbols('AAPL')).rejects.toStrictEqual(
+        expect.any(MarketServiceUnavailableException),
+      );
+    },
+  );
 
   it('maps Finnhub responses and handles provider failures', async () => {
     const gateway = new FinnhubGatewayImpl('key');
